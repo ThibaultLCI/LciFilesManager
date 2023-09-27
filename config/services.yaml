@@ -7,8 +7,7 @@ parameters:
   divalto_base_url: "https://api.weavy.divalto.com/v1/EntryPoints/LOOD/webhook/"
   servers:
     server_crm: # For Testing
-      directory: '\\srv-car-crm\e$\000 - DEV CRM' 
-      local_app_directory: 'uploads\Crm'
+      directory: '\\srv-car-crm\crm\000 - DEV CRM' 
 
 services:
   # default configuration for services in *this* file

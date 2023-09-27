@@ -81,23 +81,14 @@ class DivaltoSiteService
 
     public function clearSite()
     {
-        $filesystem = new Filesystem();
         $sites = $this->siteRepository->findAll();
 
         try {
-            foreach ($this->params->get('servers') as $server) {
-                foreach ($server as $key => $folderpath) {
-                    if ($key === "local_app_directory") {
-                        $filesystem->remove($folderpath);
-                    }
-                }
-            }
-
             foreach ($sites as $site) {
                 $this->em->remove($site);
             }
 
-            // $this->em->flush();
+            $this->em->flush();
 
             return new JsonResponse("clear Site");
         } catch (IOExceptionInterface $exception) {
@@ -157,7 +148,7 @@ class DivaltoSiteService
                 }
             }
         }
-        // $this->em->flush();
+        $this->em->flush();
 
         return new JsonResponse($nbNewSites . " site(s) ajouté, " . $nbUpdatedSites . " site(s) mis a jour");
     }
@@ -176,7 +167,6 @@ class DivaltoSiteService
 
             try {
                 $filesystem->symlink($siteIdFolder . "" . $newSite->getIdCrm(), $siteIntituleFolder . "" . $newSite->getIntitule() . " (" . $newSite->getVille() . ")");
-                $filesystem->symlink($siteIdFolder . "" . $newSite->getIdCrm(),  $server["local_app_directory"] . "/Nom d'usage/" . "" . $newSite->getIntitule() . " (" . $newSite->getVille() . ")");
             } catch (IOExceptionInterface $exception) {
                 echo  $exception;
             }
@@ -190,10 +180,8 @@ class DivaltoSiteService
         foreach ($this->params->get('servers') as $server) {
 
             $filesystem->remove($server['directory'] . "/Nom d'usage/" . $oldSiteIntitule);
-            $filesystem->remove($server['local_app_directory'] . "/Nom d'usage/" . $oldSiteIntitule);
 
             $filesystem->symlink($server['directory'] . "/Id/" . $site->getIdCrm(), $server['directory'] . "/Nom d'usage/" . $site->getIntitule() . " (" . $site->getVille() . ")");
-            $filesystem->symlink($server['directory'] . "/Id/" . $site->getIdCrm(), $server['local_app_directory'] . "/Nom d'usage/" . "" . $site->getIntitule() . " (" . $site->getVille() . ")");
         }
     }
 }
