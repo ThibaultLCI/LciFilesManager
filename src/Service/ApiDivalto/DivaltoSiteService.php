@@ -10,16 +10,46 @@ use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
+use phpseclib3\Net\SSH2;
+
 class DivaltoSiteService
 {
     public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private SiteRepository $siteRepository)
     {
     }
 
+    public function initFolderOnServers()
+    {
+        $userSSH = $this->params->get('user_ssh');
+
+        foreach ($this->params->get('servers') as $server) {
+            $baseFolder = $server['base_directory'] . "\\000 - DEV CRM";
+            $idFolder = $baseFolder . "\\Id";
+            $nomUsageFolder = $baseFolder . "\\Nom d'usage";
+
+            $ssh = new SSH2($server['host'], $server['port']);
+
+            if (!$ssh->login($userSSH['username'], $userSSH['password'])) {
+                die('Échec de l\'authentification SSH sur le serveur' . $server['name']);
+            }
+
+            $checkFolderCommand = "if not exist \"$baseFolder\" (echo 0) else (echo 1)";
+            $output = $ssh->exec($checkFolderCommand);
+
+            if (trim($output) === '0') {
+                $ssh->exec("mkdir \"$baseFolder\"");
+                $ssh->exec("mkdir \"$idFolder\"");
+                $ssh->exec("mkdir \"$nomUsageFolder\"");
+            }
+
+            $ssh->disconnect();
+        }
+    }
+
     public function fetchSites(): JsonResponse
     {
         $apiBaseUrl = $this->params->get('divalto_base_url');
-        $url = $apiBaseUrl . "?c=B%2BaWlAEI5JEaSGV%2FnPqj7u7sWvTgN7ILpO8ENEDhqf2odk2H5o%2FlRIOHC95yyqq7";
+        $url = $apiBaseUrl . "?c=B%2BaWlAEI5JEaSGV%2FnPqj7u7sWvTgN7ILpO8ENEDhqf2D1Nl3Bdj589fxKk8dAnx1";
 
         $pageNumber = 1;
         $maxPageNumber = 0;
@@ -155,33 +185,56 @@ class DivaltoSiteService
 
     private function createFolder(Site $newSite): void
     {
-        $filesystem = new Filesystem();
+        $userSSH = $this->params->get('user_ssh');
 
         foreach ($this->params->get('servers') as $server) {
-            $serverBaseDirectory = $server['directory'];
-            $siteIdFolder = $serverBaseDirectory . "/Id/";
-            $siteIntituleFolder = $serverBaseDirectory . "/Nom d'usage/";
+            $baseFolder = $server['base_directory'] . "\\000 - DEV CRM";
+            $siteIdFolder = $baseFolder . "\\Id\\";
+            $siteIntituleFolder = $baseFolder . "\\Nom d'usage\\";
 
-            $filesystem->mkdir($siteIdFolder . $newSite->getIdCrm());
-            $filesystem->touch($siteIdFolder . "" . $newSite->getIdCrm() . "/" . $newSite->getIdCrm() . "test.txt");
+            $ssh = new SSH2($server['host'], $server['port']);
+
+            if (!$ssh->login($userSSH['username'], $userSSH['password'])) {
+                die('Échec de l\'authentification SSH sur le serveur' . $server['name']);
+            }
+
+            $ssh->exec("mkdir \"$siteIdFolder\"" . $newSite->getIdCrm() . "");
+
+            $ssh->exec("echo > \"$siteIdFolder\"" . $newSite->getIdCrm() . "/" . $newSite->getIdCrm() . ".txt");
 
             try {
-                $filesystem->symlink($siteIdFolder . "" . $newSite->getIdCrm(), $siteIntituleFolder . "" . $newSite->getIntitule() . " (" . $newSite->getVille() . ")");
+                $linkTarget = $siteIdFolder . $newSite->getIdCrm();
+                $linkPath = $siteIntituleFolder . $newSite->getIntitule() . " (" . $newSite->getVille() . ")";
+                $ssh->exec("mklink /J \"$linkPath\" \"$linkTarget\"");
             } catch (IOExceptionInterface $exception) {
                 echo  $exception;
             }
+
+            $ssh->disconnect();
         }
     }
 
     private function editFolder(Site $site, string $oldSiteIntitule): void
     {
-        $filesystem = new Filesystem();
+        $userSSH = $this->params->get('user_ssh');
 
         foreach ($this->params->get('servers') as $server) {
+            $baseFolder = $server['base_directory'] . "\\000 - DEV CRM";
+            $siteIdFolder = $baseFolder . "\\Id\\";
+            $siteIntituleFolder = $baseFolder . "\\Nom d'usage\\";
 
-            $filesystem->remove($server['directory'] . "/Nom d'usage/" . $oldSiteIntitule);
+            $ssh = new SSH2($server['host'], $server['port']);
 
-            $filesystem->symlink($server['directory'] . "/Id/" . $site->getIdCrm(), $server['directory'] . "/Nom d'usage/" . $site->getIntitule() . " (" . $site->getVille() . ")");
+            if (!$ssh->login($userSSH['username'], $userSSH['password'])) {
+                die('Échec de l\'authentification SSH sur le serveur' . $server['name']);
+            }
+
+            $result = $ssh->exec("rmdir /s /q  \"$siteIntituleFolder\"\"$oldSiteIntitule\"");
+            echo $result;
+
+            $linkTarget = $siteIdFolder . $site->getIdCrm();
+            $linkPath = $siteIntituleFolder . $site->getIntitule() . " (" . $site->getVille() . ")";
+            $ssh->exec("mklink /J \"$linkPath\" \"$linkTarget\"");
         }
     }
 }

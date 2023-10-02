@@ -30,9 +30,17 @@ class CheckCrmSiteCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
+        $start = microtime(true);
+
+		$this->divaltoSiteService->initFolderOnServers();
+
         $response = $this->divaltoSiteService->fetchSites();
 
         $io->success(json_decode($response->getContent()));
+
+        $end = microtime(true) - $start;
+
+        echo $end;
 
         return Command::SUCCESS;
     }
