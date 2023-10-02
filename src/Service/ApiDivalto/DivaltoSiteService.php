@@ -7,43 +7,55 @@ use App\Repository\SiteRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 use phpseclib3\Net\SSH2;
+use Psr\Log\LoggerInterface;
 
 class DivaltoSiteService
 {
-    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private SiteRepository $siteRepository)
+    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private SiteRepository $siteRepository, private LoggerInterface $logger)
     {
     }
 
-    public function initFolderOnServers()
+    public function initFolderOnServers(): void
     {
         $userSSH = $this->params->get('user_ssh');
 
         foreach ($this->params->get('servers') as $server) {
+            $ssh = new SSH2($server['host'], $server['port']);
+
+            if (!$ssh->login($userSSH['username'], $userSSH['password'])) {
+                $this->logger->error('Échec de l\'authentification SSH sur le serveur ' . $server['name']);
+                continue; // Passer au serveur suivant en cas d'échec d'authentification SSH.
+            }
+
             $baseFolder = $server['base_directory'] . "\\000 - DEV CRM";
             $idFolder = $baseFolder . "\\Id";
             $nomUsageFolder = $baseFolder . "\\Nom d'usage";
 
-            $ssh = new SSH2($server['host'], $server['port']);
-
-            if (!$ssh->login($userSSH['username'], $userSSH['password'])) {
-                die('Échec de l\'authentification SSH sur le serveur' . $server['name']);
-            }
-
-            $checkFolderCommand = "if not exist \"$baseFolder\" (echo 0) else (echo 1)";
-            $output = $ssh->exec($checkFolderCommand);
-
-            if (trim($output) === '0') {
-                $ssh->exec("mkdir \"$baseFolder\"");
-                $ssh->exec("mkdir \"$idFolder\"");
-                $ssh->exec("mkdir \"$nomUsageFolder\"");
+            if (!$this->createFoldersIfNotExist($ssh, [$baseFolder, $idFolder, $nomUsageFolder])) {
+                $this->logger->error('Échec de création des dossiers sur le serveur ' . $server['name']);
             }
 
             $ssh->disconnect();
         }
+    }
+
+    private function createFoldersIfNotExist(SSH2 $ssh, array $folders): bool
+    {
+        $success = true;
+
+        foreach ($folders as $folder) {
+            $checkFolderCommand = "if not exist \"$folder\" (echo 0) else (echo 1)";
+            $output = $ssh->exec($checkFolderCommand);
+
+            if (trim($output) === '0') {
+                $ssh->exec("mkdir \"$folder\"");
+            }
+        }
+
+        return $success;
     }
 
     public function fetchSites(): JsonResponse
@@ -131,56 +143,66 @@ class DivaltoSiteService
         $nbNewSites = 0;
         $nbUpdatedSites = 0;
 
-        foreach ($crmSites as $crmSite) {
-            $site = $this->siteRepository->findOneBy([
-                'idCrm' => $crmSite["customer"]["codecustomer"]
-            ]);
+        $entityManager = $this->em;
+        $entityManager->beginTransaction();
 
-            $newSite = new Site();
-            $newSite->setIdCrm($crmSite["customer"]["codecustomer"])
-                ->setIntitule($crmSite["customer"]["name"])
-                ->setAdresse($crmSite["customer"]["address1"])
-                ->setCodePostal($crmSite["customer"]["postalCode"])
-                ->setVille($crmSite["customer"]["city"]);
+        try {
+            foreach ($crmSites as $crmSite) {
+                $site = $this->siteRepository->findOneBy([
+                    'idCrm' => $crmSite["customer"]["codecustomer"]
+                ]);
 
-            if (!$site) {
-                $this->em->persist($newSite);
-                $this->createFolder($newSite);
-                $nbNewSites++;
-            } else {
-                $hasUpdate = false;
-                $oldSiteIntitule = null;
+                $newSite = new Site();
+                $newSite->setIdCrm($crmSite["customer"]["codecustomer"])
+                    ->setIntitule($crmSite["customer"]["name"])
+                    ->setAdresse($crmSite["customer"]["address1"])
+                    ->setCodePostal($crmSite["customer"]["postalCode"])
+                    ->setVille($crmSite["customer"]["city"]);
 
-                if ($site->getIntitule() != $newSite->getIntitule()) {
-                    $oldSiteIntitule = $site->getIntitule() . " (" . $newSite->getVille() . ")";
-                    $site->setIntitule($newSite->getIntitule());
-                    $this->editFolder($site, $oldSiteIntitule);
-                    $hasUpdate = true;
-                }
+                if (!$site) {
+                    $entityManager->persist($newSite);
+                    $this->createFolder($newSite);
+                    $nbNewSites++;
+                } else {
+                    $hasUpdate = false;
+                    $oldSiteIntitule = null;
 
-                if ($site->getAdresse() != $newSite->getAdresse()) {
-                    $site->setAdresse($newSite->getAdresse());
-                    $hasUpdate = true;
-                }
+                    if ($site->getIntitule() != $newSite->getIntitule()) {
+                        $oldSiteIntitule = $site->getIntitule() . " (" . $newSite->getVille() . ")";
+                        $site->setIntitule($newSite->getIntitule());
+                        $this->editFolder($site, $oldSiteIntitule);
+                        $hasUpdate = true;
+                    }
 
-                if ($site->getCodePostal() != $newSite->getCodePostal()) {
-                    $site->setCodePostal($newSite->getCodePostal());
-                    $hasUpdate = true;
-                }
+                    if ($site->getAdresse() != $newSite->getAdresse()) {
+                        $site->setAdresse($newSite->getAdresse());
+                        $hasUpdate = true;
+                    }
 
-                if ($site->getVille() != $newSite->getVille()) {
-                    $site->setVille($newSite->getVille());
-                    $hasUpdate = true;
-                }
+                    if ($site->getCodePostal() != $newSite->getCodePostal()) {
+                        $site->setCodePostal($newSite->getCodePostal());
+                        $hasUpdate = true;
+                    }
 
-                if ($hasUpdate) {
-                    $nbUpdatedSites++;
+                    if ($site->getVille() != $newSite->getVille()) {
+                        $site->setVille($newSite->getVille());
+                        $hasUpdate = true;
+                    }
+
+                    if ($hasUpdate) {
+                        $nbUpdatedSites++;
+                    }
                 }
             }
-        }
-        $this->em->flush();
 
-        return new JsonResponse($nbNewSites . " site(s) ajouté, " . $nbUpdatedSites . " site(s) mis a jour");
+            $entityManager->flush();
+            $entityManager->commit();
+
+            return new JsonResponse($nbNewSites . " site(s) ajouté, " . $nbUpdatedSites . " site(s) mis a jour");
+        } catch (\Exception $e) {
+            $entityManager->rollback();
+            throw $e;
+        }
     }
 
     private function createFolder(Site $newSite): void
