@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\SiteRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SiteRepository::class)]
@@ -33,6 +35,14 @@ class Site
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $lienGoolgle = null;
+
+    #[ORM\ManyToMany(targetEntity: Server::class, inversedBy: 'sites')]
+    private Collection $serveurs;
+
+    public function __construct()
+    {
+        $this->serveurs = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -119,6 +129,30 @@ class Site
     public function setLienGoolgle(?string $lienGoolgle): static
     {
         $this->lienGoolgle = $lienGoolgle;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Server>
+     */
+    public function getServeurs(): Collection
+    {
+        return $this->serveurs;
+    }
+
+    public function addServeur(Server $serveur): static
+    {
+        if (!$this->serveurs->contains($serveur)) {
+            $this->serveurs->add($serveur);
+        }
+
+        return $this;
+    }
+
+    public function removeServeur(Server $serveur): static
+    {
+        $this->serveurs->removeElement($serveur);
 
         return $this;
     }

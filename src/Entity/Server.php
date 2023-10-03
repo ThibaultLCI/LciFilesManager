@@ -27,9 +27,13 @@ class Server
     #[ORM\OneToMany(mappedBy: 'server', targetEntity: Folder::class)]
     private Collection $folders;
 
+    #[ORM\ManyToMany(targetEntity: Site::class, mappedBy: 'serveurs')]
+    private Collection $sites;
+
     public function __construct()
     {
         $this->folders = new ArrayCollection();
+        $this->sites = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -98,6 +102,33 @@ class Server
             if ($folder->getServer() === $this) {
                 $folder->setServer(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Site>
+     */
+    public function getSites(): Collection
+    {
+        return $this->sites;
+    }
+
+    public function addSite(Site $site): static
+    {
+        if (!$this->sites->contains($site)) {
+            $this->sites->add($site);
+            $site->addServeur($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSite(Site $site): static
+    {
+        if ($this->sites->removeElement($site)) {
+            $site->removeServeur($this);
         }
 
         return $this;
