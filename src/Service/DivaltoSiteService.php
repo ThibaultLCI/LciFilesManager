@@ -118,4 +118,56 @@ class DivaltoSiteService
 
         return new JsonResponse("Hello");
     }
+
+    // private function checkDatabaseSite($crmSites): JsonResponse
+    // {
+    //     $nbNewSites = 0;
+    //     $nbUpdatedSites = 0;
+
+    //     $entityManager = $this->em;
+
+    //     try {
+    //         foreach ($crmSites as $crmSite) {
+    //             $site = $this->siteRepository->findOneBy([
+    //                 'idCrm' => $crmSite["customer"]["codecustomer"]
+    //             ]);
+
+    //             $newSite = new Site();
+    //             $newSite->setIdCrm($crmSite["customer"]["codecustomer"])
+    //                 ->setIntitule($crmSite["customer"]["name"])
+    //                 ->setVille($crmSite["customer"]["city"]);
+
+    //             if (!$site) {
+    //                 $entityManager->persist($newSite);
+    //                 $this->createFolder($newSite);
+    //                 $nbNewSites++;
+    //             } else {
+    //                 $hasUpdate = false;
+    //                 $oldSiteIntitule = null;
+
+    //                 if ($site->getIntitule() != $newSite->getIntitule()) {
+    //                     $oldSiteIntitule = $site->getIntitule() . " (" . $newSite->getVille() . ")";
+    //                     $site->setIntitule($newSite->getIntitule());
+    //                     $this->editFolder($site, $oldSiteIntitule);
+    //                     $hasUpdate = true;
+    //                 }
+
+    //                 if ($site->getVille() != $newSite->getVille()) {
+    //                     $site->setVille($newSite->getVille());
+    //                     $hasUpdate = true;
+    //                 }
+
+    //                 if ($hasUpdate) {
+    //                     $nbUpdatedSites++;
+    //                 }
+    //             }
+    //         }
+
+    //         $entityManager->flush();
+
+    //         return new JsonResponse($nbNewSites . " site(s) ajouté, " . $nbUpdatedSites . " site(s) mis a jour");
+    //     } catch (\Exception $e) {
+    //         throw $e;
+    //     }
+    // }
 }
