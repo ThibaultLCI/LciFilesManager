@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\ApiDivalto;
+namespace App\Service;
 
 use App\Entity\Site;
 use App\Repository\SiteRepository;
@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use phpseclib3\Net\SSH2;
 use Psr\Log\LoggerInterface;
 
-class DivaltoSiteService
+class DivaltoSiteServiceOld
 {
     public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private SiteRepository $siteRepository, private LoggerInterface $logger)
     {
@@ -144,7 +144,6 @@ class DivaltoSiteService
         $nbUpdatedSites = 0;
 
         $entityManager = $this->em;
-        $entityManager->beginTransaction();
 
         try {
             foreach ($crmSites as $crmSite) {
@@ -196,11 +195,9 @@ class DivaltoSiteService
             }
 
             $entityManager->flush();
-            $entityManager->commit();
 
             return new JsonResponse($nbNewSites . " site(s) ajouté, " . $nbUpdatedSites . " site(s) mis a jour");
         } catch (\Exception $e) {
-            $entityManager->rollback();
             throw $e;
         }
     }

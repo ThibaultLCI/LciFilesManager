@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Service\ApiDivalto\DivaltoSiteService;
+use App\Service\DivaltoSiteService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -29,8 +29,6 @@ class CheckCrmSiteCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         $start = microtime(true);
-
-		$this->divaltoSiteService->initFolderOnServers();
 
         $response = $this->divaltoSiteService->fetchSites();
 
