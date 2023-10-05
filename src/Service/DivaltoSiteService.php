@@ -86,7 +86,9 @@ class DivaltoSiteService
         $infoSite = $this->addOrUpdateSites($crmSites);
 
         foreach ($serverRepository->findAll() as $server) {
-            $siteFolderArray = [];
+            $siteFolderToCreate = [];
+            $siteFolderToUpdate = [];
+
             foreach ($server->getFolders() as $folder) {
                 foreach ($crmSites as $crmSite) {
 
@@ -95,12 +97,17 @@ class DivaltoSiteService
                     ]);
 
                     if (!$site->getFolders()->contains($folder)) {
-                        array_push($siteFolderArray, ["Site" => $site, "Folder" => $folder]);
+                        array_push($siteFolderToCreate, ["Site" => $site, "Folder" => $folder]);
+                    }
+                    elseif ($site && $site->getOldIntitule()) {
+                        array_push($siteFolderToUpdate, ["Site" => $site, "Folder" => $folder]);
                     }
                 }
             }
-            $this->folderManagerService->createOrUpdateFolderOnServer($siteFolderArray, $server);
+            $this->folderManagerService->createOrUpdateFolderOnServer($siteFolderToCreate,$siteFolderToUpdate, $server);
         }
+
+        $this->clearOldIntitule();
 
         $this->em->flush();
 
@@ -153,5 +160,15 @@ class DivaltoSiteService
         $this->em->flush();
 
         return new JsonResponse($nbNewSites . " site(s) ajouté, " . $nbUpdatedSites . " site(s) mis a jour");
+    }
+
+    private function clearOldIntitule() : void {
+        $siteRepository = $this->em->getRepository(Site::class);
+
+        $sites = $siteRepository->findSitesWithOldIntile();
+
+        foreach ($sites as $site) {
+           $site->setOldIntitule(null);
+        }
     }
 }

@@ -12,7 +12,7 @@ class SshService
     {
     }
 
-    function connexion(Server $server) : SSH2 {
+    public function connexion(Server $server) : SSH2 {
         $userSSH = $this->params->get('user_ssh');
 
         $ssh = new SSH2($server->getHost(), $server->getPort());
@@ -24,7 +24,7 @@ class SshService
         return $ssh ;
     }
 
-    function deconnexion(SSH2 $ssh) : void {
+    public function deconnexion(SSH2 $ssh) : void {
         $ssh->disconnect();
     }
 }

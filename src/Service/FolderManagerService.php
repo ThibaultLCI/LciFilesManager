@@ -14,15 +14,21 @@ class FolderManagerService
     {
     }
 
-    function createOrUpdateFolderOnServer(array $siteFolderToCreateOrUpdate, Server $server)
+    function createOrUpdateFolderOnServer(array $siteFolderToCreate,array $siteFolderToUpdate, Server $server)
     {
         $ssh = $this->sshService->connexion($server);
 
         $this->initFoldersOnServers($ssh, $server);
 
-        foreach ($siteFolderToCreateOrUpdate as $siteFolder) {
-            $siteFolder["Site"]->getOldIntitule() ? $this->editFolder($ssh, $siteFolder) : $this->createFolder($ssh, $siteFolder);
+        foreach ($siteFolderToCreate as $siteFolder) {
+            $this->createFolder($ssh, $siteFolder);
         }
+
+        foreach ($siteFolderToUpdate as $siteFolder) {
+            $this->editFolder($ssh, $siteFolder);
+        }
+        
+        $this->sshService->deconnexion($ssh);
     }
 
     private function initFoldersOnServers(SSH2 $ssh, Server $server): void
