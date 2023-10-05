@@ -24,9 +24,16 @@ class Site
     #[ORM\Column(length: 255)]
     private ?string $ville = null;
 
+    #[ORM\ManyToMany(targetEntity: Folder::class, inversedBy: 'sites')]
+    private Collection $folders;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $oldIntitule = null;
+
 
     public function __construct()
     {
+        $this->folders = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -67,6 +74,42 @@ class Site
     public function setVille(string $ville): static
     {
         $this->ville = $ville;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Folder>
+     */
+    public function getFolders(): Collection
+    {
+        return $this->folders;
+    }
+
+    public function addFolder(Folder $folder): static
+    {
+        if (!$this->folders->contains($folder)) {
+            $this->folders->add($folder);
+        }
+
+        return $this;
+    }
+
+    public function removeFolder(Folder $folder): static
+    {
+        $this->folders->removeElement($folder);
+
+        return $this;
+    }
+
+    public function getOldIntitule(): ?string
+    {
+        return $this->oldIntitule;
+    }
+
+    public function setOldIntitule(?string $oldIntitule): static
+    {
+        $this->oldIntitule = $oldIntitule;
 
         return $this;
     }

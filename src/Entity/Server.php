@@ -24,8 +24,12 @@ class Server
     #[ORM\Column]
     private ?int $port = null;
 
+    #[ORM\OneToMany(mappedBy: 'server', targetEntity: Folder::class)]
+    private Collection $folders;
+
     public function __construct()
     {
+        $this->folders = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -65,6 +69,36 @@ class Server
     public function setPort(int $port): static
     {
         $this->port = $port;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Folder>
+     */
+    public function getFolders(): Collection
+    {
+        return $this->folders;
+    }
+
+    public function addFolder(Folder $folder): static
+    {
+        if (!$this->folders->contains($folder)) {
+            $this->folders->add($folder);
+            $folder->setServer($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFolder(Folder $folder): static
+    {
+        if ($this->folders->removeElement($folder)) {
+            // set the owning side to null (unless already changed)
+            if ($folder->getServer() === $this) {
+                $folder->setServer(null);
+            }
+        }
 
         return $this;
     }

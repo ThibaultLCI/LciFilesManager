@@ -11,14 +11,14 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class DivaltoSiteService
 {
-    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params)
+    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private FolderManagerService $folderManagerService)
     {
     }
 
     public function fetchSites(): JsonResponse
     {
         $apiBaseUrl = $this->params->get('divalto_base_url');
-        $url = $apiBaseUrl . "?c=B%2BaWlAEI5JEaSGV%2FnPqj7u7sWvTgN7ILpO8ENEDhqf2D1Nl3Bdj589fxKk8dAnx1";
+        $url = $apiBaseUrl . "?c=B%2BaWlAEI5JEaSGV%2FnPqj7u7sWvTgN7ILpO8ENEDhqf2odk2H5o%2FlRIOHC95yyqq7";
 
         $pageNumber = 1;
         $maxPageNumber = 0;
@@ -78,96 +78,80 @@ class DivaltoSiteService
         return  $this->checkDatabaseSite($sites);
     }
 
-    public function clearSite()
-    {
-        $siteRepository = $this->em->getRepository(Site::class);
-        $sites = $siteRepository->findAll();
-
-        try {
-            foreach ($sites as $site) {
-                $this->em->remove($site);
-            }
-
-            $this->em->flush();
-
-            return new JsonResponse("clear Site");
-        } catch (IOExceptionInterface $exception) {
-            echo  $exception;
-        }
-    }
-
     private function checkDatabaseSite($crmSites): JsonResponse
     {
         $serverRepository = $this->em->getRepository(Server::class);
-        $folderRepository = $this->em->getRepository(Folder::class);
         $siteRepository = $this->em->getRepository(Site::class);
 
+        $infoSite = $this->addOrUpdateSites($crmSites);
+
         foreach ($serverRepository->findAll() as $server) {
-            foreach ($folderRepository->findBy(['site' => $server->getSite()]) as $folder) {
+            $siteFolderArray = [];
+            foreach ($server->getFolders() as $folder) {
                 foreach ($crmSites as $crmSite) {
+
                     $site = $siteRepository->findOneBy([
                         'idCrm' => $crmSite["customer"]["codecustomer"],
-                        'server' => $server,
-                        'folder' => $folder
                     ]);
+
+                    if (!$site->getFolders()->contains($folder)) {
+                        array_push($siteFolderArray, ["Site" => $site, "Folder" => $folder]);
+                    }
+                }
+            }
+            $this->folderManagerService->createOrUpdateFolderOnServer($siteFolderArray, $server);
+        }
+
+        $this->em->flush();
+
+        $infoSite = json_decode($infoSite->getContent());
+
+        return new JsonResponse($infoSite);
+    }
+
+    private function addOrUpdateSites(array $crmSites): JsonResponse
+    {
+        $siteRepository = $this->em->getRepository(Site::class);
+        $nbNewSites = 0;
+        $nbUpdatedSites = 0;
+
+
+        foreach ($crmSites as $crmSite) {
+            $newSite = new Site();
+            $newSite->setIdCrm($crmSite["customer"]["codecustomer"])
+                ->setIntitule($crmSite["customer"]["name"] . " (" . $crmSite["customer"]["city"] . ")")
+                ->setVille($crmSite["customer"]["city"]);
+
+            $site = $siteRepository->findOneBy([
+                'idCrm' => $crmSite["customer"]["codecustomer"],
+            ]);
+
+            if (!$site) {
+                $this->em->persist($newSite);
+                $nbNewSites++;
+            } else {
+                $hasUpdate = false;
+                $oldSiteIntitule = $site->getIntitule();
+
+                if ($site->getIntitule() != $newSite->getIntitule()) {
+                    $site->setIntitule($newSite->getIntitule());
+                    $hasUpdate = true;
+                }
+
+                if ($site->getVille() != $newSite->getVille()) {
+                    $site->setVille($newSite->getVille());
+                    $hasUpdate = true;
+                }
+
+                if ($hasUpdate) {
+                    $site->setOldIntitule($oldSiteIntitule);
+                    $nbUpdatedSites++;
                 }
             }
         }
 
+        $this->em->flush();
 
-
-        return new JsonResponse("Hello");
+        return new JsonResponse($nbNewSites . " site(s) ajouté, " . $nbUpdatedSites . " site(s) mis a jour");
     }
-
-    // private function checkDatabaseSite($crmSites): JsonResponse
-    // {
-    //     $nbNewSites = 0;
-    //     $nbUpdatedSites = 0;
-
-    //     $entityManager = $this->em;
-
-    //     try {
-    //         foreach ($crmSites as $crmSite) {
-    //             $site = $this->siteRepository->findOneBy([
-    //                 'idCrm' => $crmSite["customer"]["codecustomer"]
-    //             ]);
-
-    //             $newSite = new Site();
-    //             $newSite->setIdCrm($crmSite["customer"]["codecustomer"])
-    //                 ->setIntitule($crmSite["customer"]["name"])
-    //                 ->setVille($crmSite["customer"]["city"]);
-
-    //             if (!$site) {
-    //                 $entityManager->persist($newSite);
-    //                 $this->createFolder($newSite);
-    //                 $nbNewSites++;
-    //             } else {
-    //                 $hasUpdate = false;
-    //                 $oldSiteIntitule = null;
-
-    //                 if ($site->getIntitule() != $newSite->getIntitule()) {
-    //                     $oldSiteIntitule = $site->getIntitule() . " (" . $newSite->getVille() . ")";
-    //                     $site->setIntitule($newSite->getIntitule());
-    //                     $this->editFolder($site, $oldSiteIntitule);
-    //                     $hasUpdate = true;
-    //                 }
-
-    //                 if ($site->getVille() != $newSite->getVille()) {
-    //                     $site->setVille($newSite->getVille());
-    //                     $hasUpdate = true;
-    //                 }
-
-    //                 if ($hasUpdate) {
-    //                     $nbUpdatedSites++;
-    //                 }
-    //             }
-    //         }
-
-    //         $entityManager->flush();
-
-    //         return new JsonResponse($nbNewSites . " site(s) ajouté, " . $nbUpdatedSites . " site(s) mis a jour");
-    //     } catch (\Exception $e) {
-    //         throw $e;
-    //     }
-    // }
 }

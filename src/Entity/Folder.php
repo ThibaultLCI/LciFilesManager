@@ -18,8 +18,15 @@ class Folder
     #[ORM\Column(length: 255)]
     private ?string $path = null;
 
+    #[ORM\ManyToOne(inversedBy: 'folders')]
+    private ?Server $server = null;
+
+    #[ORM\ManyToMany(targetEntity: Site::class, mappedBy: 'folders')]
+    private Collection $sites;
+
     public function __construct()
     {
+        $this->sites = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -35,6 +42,45 @@ class Folder
     public function setPath(string $path): static
     {
         $this->path = $path;
+
+        return $this;
+    }
+
+    public function getServer(): ?Server
+    {
+        return $this->server;
+    }
+
+    public function setServer(?Server $server): static
+    {
+        $this->server = $server;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Site>
+     */
+    public function getSites(): Collection
+    {
+        return $this->sites;
+    }
+
+    public function addSite(Site $site): static
+    {
+        if (!$this->sites->contains($site)) {
+            $this->sites->add($site);
+            $site->addFolder($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSite(Site $site): static
+    {
+        if ($this->sites->removeElement($site)) {
+            $site->removeFolder($this);
+        }
 
         return $this;
     }
