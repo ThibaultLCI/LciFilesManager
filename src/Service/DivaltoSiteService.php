@@ -6,7 +6,6 @@ use App\Entity\Server;
 use App\Entity\Site;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class DivaltoSiteService
@@ -17,6 +16,8 @@ class DivaltoSiteService
 
     public function fetchSites(): JsonResponse
     {
+        $start = microtime(true);
+
         $apiBaseUrl = $this->params->get('divalto_base_url');
         $url = $apiBaseUrl . "?c=B%2BaWlAEI5JEaSGV%2FnPqj7u7sWvTgN7ILpO8ENEDhqf2D1Nl3Bdj589fxKk8dAnx1";
 
@@ -75,8 +76,25 @@ class DivaltoSiteService
             $pageNumber++;
         } while ($pageNumber - 1 < $maxPageNumber);
 
+        $end = microtime(true) - $start;
+        echo "temp Call Api : " . $end ."\n";
+
         return  $this->checkDatabaseSite($sites);
         // return new JsonResponse("Call Api");
+    }
+
+    public function clearSites(): JsonResponse
+    {
+        $siteRepository = $this->em->getRepository(Site::class);
+        $sites = $siteRepository->findAll();
+
+        foreach ($sites as $site) {
+            $this->em->remove($site);
+        }
+        $this->em->flush();
+
+
+        return new JsonResponse("Site Clear");
     }
 
     private function checkDatabaseSite($crmSites): JsonResponse
@@ -99,22 +117,21 @@ class DivaltoSiteService
 
                     if (!$site->getFolders()->contains($folder)) {
                         array_push($siteFolderToCreate, ["Site" => $site, "Folder" => $folder]);
-                    }
-                    elseif ($site && $site->getOldIntitule()) {
+                    } elseif ($site && $site->getOldIntitule()) {
                         array_push($siteFolderToUpdate, ["Site" => $site, "Folder" => $folder]);
                     }
                 }
             }
-            $this->folderManagerService->createOrUpdateFolderOnServer($siteFolderToCreate,$siteFolderToUpdate, $server);
+            $this->folderManagerService->createOrUpdateFolderOnServer($siteFolderToCreate, $siteFolderToUpdate, $server);
         }
 
-        
+
         $this->clearOldIntitule();
-        
+
         $this->em->flush();
-        
+
         $infoSite = json_decode($infoSite->getContent());
-        
+
         echo $this->sshService->getNbOuvertureSsh();
 
         return new JsonResponse($infoSite);
@@ -166,13 +183,14 @@ class DivaltoSiteService
         return new JsonResponse($nbNewSites . " site(s) ajouté, " . $nbUpdatedSites . " site(s) mis a jour");
     }
 
-    private function clearOldIntitule() : void {
+    private function clearOldIntitule(): void
+    {
         $siteRepository = $this->em->getRepository(Site::class);
 
         $sites = $siteRepository->findSitesWithOldIntile();
 
         foreach ($sites as $site) {
-           $site->setOldIntitule(null);
+            $site->setOldIntitule(null);
         }
     }
 }

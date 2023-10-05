@@ -8,13 +8,16 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class SshService
 {
-    private $nbOuvertureSSh = 0 ;
+    private $nbOuvertureSSh = 0;
 
     public function __construct(private ParameterBagInterface $params,)
     {
     }
 
-    public function connexion(Server $server) : SSH2 {
+    public function connexion(Server $server): SSH2
+    {
+        $start = microtime(true);
+
         $userSSH = $this->params->get('user_ssh');
 
         $ssh = new SSH2($server->getHost(), $server->getPort());
@@ -23,16 +26,21 @@ class SshService
             die('Échec de l\'authentification SSH sur le serveur' . $server['name']);
         }
 
-        $this->nbOuvertureSSh++ ;
+        $this->nbOuvertureSSh++;
 
-        return $ssh ;
+        $end = microtime(true) - $start;
+        echo "temp connexion ssh pour le server : " . $server->getName() . " : " . $end . "\n";
+
+        return $ssh;
     }
 
-    public function deconnexion(SSH2 $ssh) : void {
+    public function deconnexion(SSH2 $ssh): void
+    {
         $ssh->disconnect();
     }
 
-    public function getNbOuvertureSsh() : int{
-        return $this->nbOuvertureSSh;
+    public function getNbOuvertureSsh(): string
+    {
+        return "nombre de connexion ssh effectué : " . $this->nbOuvertureSSh . "\n";
     }
 }

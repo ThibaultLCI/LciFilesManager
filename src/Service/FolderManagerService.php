@@ -14,21 +14,28 @@ class FolderManagerService
     {
     }
 
-    function createOrUpdateFolderOnServer(array $siteFolderToCreate,array $siteFolderToUpdate, Server $server)
+    function createOrUpdateFolderOnServer(array $siteFolderToCreate, array $siteFolderToUpdate, Server $server)
     {
-        $ssh = $this->sshService->connexion($server);
+        if (count($siteFolderToCreate) != 0 || count($siteFolderToUpdate) != 0) {
+            $start = microtime(true);
 
-        $this->initFoldersOnServers($ssh, $server);
+            $ssh = $this->sshService->connexion($server);
 
-        foreach ($siteFolderToCreate as $siteFolder) {
-            $this->createFolder($ssh, $siteFolder);
+            $this->initFoldersOnServers($ssh, $server);
+
+            foreach ($siteFolderToCreate as $siteFolder) {
+                $this->createFolder($ssh, $siteFolder);
+            }
+
+            foreach ($siteFolderToUpdate as $siteFolder) {
+                $this->editFolder($ssh, $siteFolder);
+            }
+
+            $this->sshService->deconnexion($ssh);
+
+            $end = microtime(true) - $start;
+            echo "temp creation/modification de dossier : " . $end ."\n";
         }
-
-        foreach ($siteFolderToUpdate as $siteFolder) {
-            $this->editFolder($ssh, $siteFolder);
-        }
-        
-        $this->sshService->deconnexion($ssh);
     }
 
     private function initFoldersOnServers(SSH2 $ssh, Server $server): void
