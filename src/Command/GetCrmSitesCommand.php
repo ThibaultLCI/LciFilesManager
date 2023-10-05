@@ -42,7 +42,7 @@ class GetCrmSitesCommand extends Command
 
         $end = microtime(true) - $start;
 
-        echo "temp global : " . $end;
+        echo "temp global : " . $end . "\n";
 
         return Command::SUCCESS ;
     }
