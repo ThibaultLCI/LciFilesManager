@@ -18,7 +18,7 @@ class DivaltoSiteService
     public function fetchSites(): JsonResponse
     {
         $apiBaseUrl = $this->params->get('divalto_base_url');
-        $url = $apiBaseUrl . "?c=B%2BaWlAEI5JEaSGV%2FnPqj7u7sWvTgN7ILpO8ENEDhqf2odk2H5o%2FlRIOHC95yyqq7";
+        $url = $apiBaseUrl . "?c=B%2BaWlAEI5JEaSGV%2FnPqj7u7sWvTgN7ILpO8ENEDhqf2D1Nl3Bdj589fxKk8dAnx1";
 
         $pageNumber = 1;
         $maxPageNumber = 0;
