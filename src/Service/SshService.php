@@ -8,6 +8,8 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class SshService
 {
+    private $nbOuvertureSSh = 0 ;
+
     public function __construct(private ParameterBagInterface $params,)
     {
     }
@@ -21,10 +23,16 @@ class SshService
             die('Échec de l\'authentification SSH sur le serveur' . $server['name']);
         }
 
+        $this->nbOuvertureSSh++ ;
+
         return $ssh ;
     }
 
     public function deconnexion(SSH2 $ssh) : void {
         $ssh->disconnect();
+    }
+
+    public function getNbOuvertureSsh() : int{
+        return $this->nbOuvertureSSh;
     }
 }

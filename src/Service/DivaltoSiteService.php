@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class DivaltoSiteService
 {
-    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private FolderManagerService $folderManagerService)
+    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private FolderManagerService $folderManagerService, private SshService $sshService)
     {
     }
 
@@ -76,6 +76,7 @@ class DivaltoSiteService
         } while ($pageNumber - 1 < $maxPageNumber);
 
         return  $this->checkDatabaseSite($sites);
+        // return new JsonResponse("Call Api");
     }
 
     private function checkDatabaseSite($crmSites): JsonResponse
@@ -107,11 +108,14 @@ class DivaltoSiteService
             $this->folderManagerService->createOrUpdateFolderOnServer($siteFolderToCreate,$siteFolderToUpdate, $server);
         }
 
+        
         $this->clearOldIntitule();
-
+        
         $this->em->flush();
-
+        
         $infoSite = json_decode($infoSite->getContent());
+        
+        echo $this->sshService->getNbOuvertureSsh();
 
         return new JsonResponse($infoSite);
     }
