@@ -18,8 +18,7 @@ class DivaltoSiteService
     {
         $start = microtime(true);
 
-        $apiBaseUrl = $this->params->get('divalto_base_url');
-        $url = $apiBaseUrl . "?c=B%2BaWlAEI5JEaSGV%2FnPqj7u7sWvTgN7ILpO8ENEDhqf2D1Nl3Bdj589fxKk8dAnx1";
+        $url = $this->params->get('divalto_customer_url');
 
         $pageNumber = 1;
         $maxPageNumber = 0;

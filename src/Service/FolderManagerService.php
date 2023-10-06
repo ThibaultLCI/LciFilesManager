@@ -23,23 +23,39 @@ class FolderManagerService
 
             $this->initFoldersOnServers($ssh, $server);
 
+            // foreach ($siteFolderToCreate as $siteFolder) {
+            //     $this->createFolder($ssh, $siteFolder);
+            // }
+
+            // foreach ($siteFolderToUpdate as $siteFolder) {
+            //     $this->editFolder($ssh, $siteFolder);
+            // }
+
+            $commands = [];
+
             foreach ($siteFolderToCreate as $siteFolder) {
-                $this->createFolder($ssh, $siteFolder);
+                $commands[] = $this->generateCreateFolderCommand($siteFolder);
             }
 
-            foreach ($siteFolderToUpdate as $siteFolder) {
-                $this->editFolder($ssh, $siteFolder);
+            foreach ($siteFolderToUpdate as $key => $siteFolder) {
+                $oldSiteIntitule = $siteFolder["Site"]->getOldIntitule();
+                $commands[] = $this->generateEditFolderCommand($siteFolder, $oldSiteIntitule);
             }
 
+            $allCommands = implode(' && ', $commands);
+
+            $ssh->exec($allCommands);
             $this->sshService->deconnexion($ssh);
 
             $end = microtime(true) - $start;
-            echo "temp creation/modification de dossier : " . $end ."\n";
+            echo "temp creation/modification de dossier : " . $end . "\n";
         }
     }
 
     private function initFoldersOnServers(SSH2 $ssh, Server $server): void
     {
+        $start = microtime(true);
+
         foreach ($server->getFolders() as $folder) {
             $baseFolder = $folder->getPath() . "\\000 - DEV CRM";
             $idFolder = $baseFolder . "\\Id";
@@ -54,9 +70,12 @@ class FolderManagerService
                 $ssh->exec("mkdir \"$nomUsageFolder\"");
             }
         }
+
+        $end = microtime(true) - $start;
+        echo "temp initialisation des dossier : " . $end . "\n";
     }
 
-    private function createFolder(SSH2 $ssh, array $siteFolder): void
+    private function generateCreateFolderCommand(array $siteFolder): string
     {
         $site = $siteFolder["Site"];
         $folder = $siteFolder["Folder"];
@@ -65,34 +84,83 @@ class FolderManagerService
         $siteIdFolder = $baseFolder . "\\Id\\";
         $siteIntituleFolder = $baseFolder . "\\Nom d'usage\\";
 
-        $ssh->exec("mkdir \"$siteIdFolder\"" . $site->getIdCrm() . "");
-
-        $ssh->exec("echo > \"$siteIdFolder\"" . $site->getIdCrm() . "/" . $site->getIdCrm() . ".txt");
+        $commands = [
+            "mkdir \"$siteIdFolder" . $site->getIdCrm() . "\"",
+            "echo > \"$siteIdFolder" . $site->getIdCrm() . "/" . $site->getIdCrm() . ".txt\""
+        ];
 
         try {
             $linkTarget = $siteIdFolder . $site->getIdCrm();
             $linkPath = $siteIntituleFolder . $site->getIntitule();
-            $ssh->exec("mklink /J \"$linkPath\" \"$linkTarget\"");
+            $commands[] = "mklink /J \"$linkPath\" \"$linkTarget\"";
             $site->addFolder($folder);
         } catch (IOExceptionInterface $exception) {
-            echo  $exception;
+            echo $exception;
         }
+
+        return implode(' && ', $commands);
     }
 
-    private function editFolder(SSH2 $ssh, array $siteFolder): void
+    private function generateEditFolderCommand(array $siteFolder, string $oldSiteIntitule): string
     {
         $site = $siteFolder["Site"];
-        $oldSiteIntitule = $site->getOldIntitule();
         $folder = $siteFolder["Folder"];
 
         $baseFolder = $folder->getPath() . "\\000 - DEV CRM";
         $siteIdFolder = $baseFolder . "\\Id\\";
         $siteIntituleFolder = $baseFolder . "\\Nom d'usage\\";
 
-        $ssh->exec("rmdir /s /q  \"$siteIntituleFolder\"\"$oldSiteIntitule\"");
+        $commands = [];
 
+        // Supprimer l'ancien lien symbolique
+        $commands[] = "rmdir /s /q \"$siteIntituleFolder$oldSiteIntitule\"";
+
+        // Créer le nouveau lien symbolique
         $linkTarget = $siteIdFolder . $site->getIdCrm();
         $linkPath = $siteIntituleFolder . $site->getIntitule();
-        $ssh->exec("mklink /J \"$linkPath\" \"$linkTarget\"");
+        $commands[] = "mklink /J \"$linkPath\" \"$linkTarget\"";
+
+        return implode(' && ', $commands);
     }
+
+
+    // private function createFolder(SSH2 $ssh, array $siteFolder): void
+    // {
+    //     $site = $siteFolder["Site"];
+    //     $folder = $siteFolder["Folder"];
+
+    //     $baseFolder = $folder->getPath() . "\\000 - DEV CRM";
+    //     $siteIdFolder = $baseFolder . "\\Id\\";
+    //     $siteIntituleFolder = $baseFolder . "\\Nom d'usage\\";
+
+    //     $ssh->exec("mkdir \"$siteIdFolder\"" . $site->getIdCrm() . "");
+
+    //     $ssh->exec("echo > \"$siteIdFolder\"" . $site->getIdCrm() . "/" . $site->getIdCrm() . ".txt");
+
+    //     try {
+    //         $linkTarget = $siteIdFolder . $site->getIdCrm();
+    //         $linkPath = $siteIntituleFolder . $site->getIntitule();
+    //         $ssh->exec("mklink /J \"$linkPath\" \"$linkTarget\"");
+    //         $site->addFolder($folder);
+    //     } catch (IOExceptionInterface $exception) {
+    //         echo  $exception;
+    //     }
+    // }
+
+    // private function editFolder(SSH2 $ssh, array $siteFolder): void
+    // {
+    //     $site = $siteFolder["Site"];
+    //     $oldSiteIntitule = $site->getOldIntitule();
+    //     $folder = $siteFolder["Folder"];
+
+    //     $baseFolder = $folder->getPath() . "\\000 - DEV CRM";
+    //     $siteIdFolder = $baseFolder . "\\Id\\";
+    //     $siteIntituleFolder = $baseFolder . "\\Nom d'usage\\";
+
+    //     $ssh->exec("rmdir /s /q  \"$siteIntituleFolder\"\"$oldSiteIntitule\"");
+
+    //     $linkTarget = $siteIdFolder . $site->getIdCrm();
+    //     $linkPath = $siteIntituleFolder . $site->getIntitule();
+    //     $ssh->exec("mklink /J \"$linkPath\" \"$linkTarget\"");
+    // }
 }
