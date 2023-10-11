@@ -76,7 +76,7 @@ class DivaltoSiteService
         } while ($pageNumber - 1 < $maxPageNumber);
 
         $end = microtime(true) - $start;
-        echo "temp Call Api : " . $end ."\n";
+        echo "temp Call Api : " . $end . "\n";
 
         return  $this->checkDatabaseSite($sites);
         // return new JsonResponse("Call Api");
@@ -191,5 +191,26 @@ class DivaltoSiteService
         foreach ($sites as $site) {
             $site->setOldIntitule(null);
         }
+    }
+
+    /**
+     * TODO
+     * fullPathFolder => Se mettre d'accord sur un architecture
+     * Actuellement cela genere un dossier 000 - DEV CRM qui contient un dossier Id et un dossier Nom d'usage
+     * le fullPathFolder est donc 000 - DEV CRM/Nom d'usage/{nomDuSite}
+     * nextcloudurl = {nomDeDomaine}/index.php/apps/files/?dir=/{serverNameOnNextCloud}/{fullPathFolder}
+     * 
+     * Voir ou/quoi envoyer a divalto quand cela sera disponible de leut coter
+     */
+    private function sendNextcloudUrl(array $newSites, array $editSites, $server): void
+    {
+        $urlsToSend = [];
+
+        foreach ($newSites as $newSite) {
+            $newUrl = "10.1.10.37/index.php/apps/files/?dir=/" . $server->getName() . "/000 - DEV CRM/Nom d'usage/" . $newSite["Site"]->getIntitule();
+            array_push($urlsToSend, $newUrl);
+        }
+
+        //todo ou/quoi envoyer a divalto selon le server
     }
 }
