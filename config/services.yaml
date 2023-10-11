@@ -6,8 +6,8 @@
 parameters:
   divalto_customer_url: '%env(divalto_customer_url)%'
   user_ssh:
-    username: admin_crm@cargo.local
-    password: DERthi2023
+    username: '%env(ssh_username)%'
+    password: '%env(ssh_password)%'
 
 services:
   # default configuration for services in *this* file
