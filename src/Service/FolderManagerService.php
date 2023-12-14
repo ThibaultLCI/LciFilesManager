@@ -23,14 +23,6 @@ class FolderManagerService
 
             $this->initFoldersOnServers($ssh, $server);
 
-            // foreach ($siteFolderToCreate as $siteFolder) {
-            //     $this->createFolder($ssh, $siteFolder);
-            // }
-
-            // foreach ($siteFolderToUpdate as $siteFolder) {
-            //     $this->editFolder($ssh, $siteFolder);
-            // }
-
             $commands = [];
 
             foreach ($siteFolderToCreate as $siteFolder) {
@@ -42,13 +34,17 @@ class FolderManagerService
                 $commands[] = $this->generateEditFolderCommand($siteFolder, $oldSiteIntitule);
             }
 
-            $allCommands = implode(' && ', $commands);
+            $batches = array_chunk($commands, 20);
 
-            $ssh->exec($allCommands);
+            foreach ($batches as $batch) {
+                $allCommands = implode(' && ', $batch);
+                $ssh->exec($allCommands);
+            }
+
             $this->sshService->deconnexion($ssh);
 
             $end = microtime(true) - $start;
-            echo "temp creation/modification de dossier : " . $end . "\n";
+            echo "temps creation/modification de dossier : " . $end . "\n";
         }
     }
 
@@ -72,7 +68,7 @@ class FolderManagerService
         }
 
         $end = microtime(true) - $start;
-        echo "temp initialisation des dossier : " . $end . "\n";
+        echo "temps initialisation des dossier : " . $end . "\n";
     }
 
     private function generateCreateFolderCommand(array $siteFolder): string

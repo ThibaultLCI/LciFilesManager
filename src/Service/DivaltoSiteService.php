@@ -24,7 +24,6 @@ class DivaltoSiteService
         $maxPageNumber = 0;
         $sites = [];
 
-
         do {
             try {
                 $params = [
@@ -76,7 +75,7 @@ class DivaltoSiteService
         } while ($pageNumber - 1 < $maxPageNumber);
 
         $end = microtime(true) - $start;
-        echo "temp Call Api : " . $end . "\n";
+        echo "temps Call Api : " . $end . "\n";
 
         return  $this->checkDatabaseSite($sites);
         // return new JsonResponse("Call Api");

@@ -29,7 +29,7 @@ class SshService
         $this->nbOuvertureSSh++;
 
         $end = microtime(true) - $start;
-        echo "temp connexion ssh pour le server : " . $server->getName() . " : " . $end . "\n";
+        echo "temps connexion ssh pour le server : " . $server->getName() . " : " . $end . "\n";
 
         return $ssh;
     }

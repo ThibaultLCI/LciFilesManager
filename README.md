@@ -22,7 +22,7 @@ Ce projet permet de récupérer les sites depuis le crm divalto et de créer des
 ```php bin/console d:m:m```
 
 
-## Utilisation :
+## Utilisation (info SRV: Z:\AUTOMATISME\$ - PROJETS ----\CRM\InfoLciFilesManager.md) :
 
 1 => créer des servers :
 
