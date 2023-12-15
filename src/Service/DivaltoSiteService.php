@@ -5,12 +5,13 @@ namespace App\Service;
 use App\Entity\Server;
 use App\Entity\Site;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class DivaltoSiteService
 {
-    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private FolderManagerService $folderManagerService, private SshService $sshService)
+    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private FolderManagerService $folderManagerService, private SshService $sshService, private LoggerInterface $logger)
     {
     }
 
@@ -75,7 +76,7 @@ class DivaltoSiteService
         } while ($pageNumber - 1 < $maxPageNumber);
 
         $end = microtime(true) - $start;
-        echo "temps Call Api : " . $end . "\n";
+        $this->logger->info("temps Call Api : " . $end . "\n");
 
         return  $this->checkDatabaseSite($sites);
         // return new JsonResponse("Call Api");
@@ -130,7 +131,7 @@ class DivaltoSiteService
 
         $infoSite = json_decode($infoSite->getContent());
 
-        echo $this->sshService->getNbOuvertureSsh();
+        $this->logger->info($this->sshService->getNbOuvertureSsh());
 
         return new JsonResponse($infoSite);
     }

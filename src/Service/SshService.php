@@ -4,13 +4,14 @@ namespace App\Service;
 
 use App\Entity\Server;
 use phpseclib3\Net\SSH2;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class SshService
 {
     private $nbOuvertureSSh = 0;
 
-    public function __construct(private ParameterBagInterface $params,)
+    public function __construct(private ParameterBagInterface $params, private LoggerInterface $logger)
     {
     }
 
@@ -29,7 +30,8 @@ class SshService
         $this->nbOuvertureSSh++;
 
         $end = microtime(true) - $start;
-        echo "temps connexion ssh pour le server : " . $server->getName() . " : " . $end . "\n";
+        $this->logger->info("temps connexion ssh pour le server : " . $server->getName() . " : " . $end . "\n");
+
 
         return $ssh;
     }

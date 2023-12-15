@@ -6,11 +6,12 @@ use App\Entity\Server;
 use App\Entity\Site;
 use phpseclib3\Net\SFTP;
 use phpseclib3\Net\SSH2;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 
 class FolderManagerService
 {
-    public function __construct(private SshService $sshService)
+    public function __construct(private SshService $sshService, private LoggerInterface $logger)
     {
     }
 
@@ -44,7 +45,7 @@ class FolderManagerService
             $this->sshService->deconnexion($ssh);
 
             $end = microtime(true) - $start;
-            echo "temps creation/modification de dossier : " . $end . "\n";
+            $this->logger->info("temps creation/modification de dossier : " . $end . "\n");
         }
     }
 
@@ -68,7 +69,7 @@ class FolderManagerService
         }
 
         $end = microtime(true) - $start;
-        echo "temps initialisation des dossier : " . $end . "\n";
+        $this->logger->info("temps initialisation des dossier : " . $end . "\n");
     }
 
     private function generateCreateFolderCommand(array $siteFolder): string
@@ -91,7 +92,7 @@ class FolderManagerService
             $commands[] = "mklink /J \"$linkPath\" \"$linkTarget\"";
             $site->addFolder($folder);
         } catch (IOExceptionInterface $exception) {
-            echo $exception;
+            $this->logger->info($exception);
         }
 
         return implode(' && ', $commands);

@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Service\DivaltoSiteService;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -17,7 +18,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 class GetCrmSitesCommand extends Command
 {
-    public function __construct(private DivaltoSiteService $divaltoSiteService)
+    public function __construct(private DivaltoSiteService $divaltoSiteService, private LoggerInterface $logger)
     {
         parent::__construct();
     }
@@ -26,24 +27,25 @@ class GetCrmSitesCommand extends Command
     {
         $this
             ->addArgument('arg1', InputArgument::OPTIONAL, 'Argument description')
-            ->addOption('option1', null, InputOption::VALUE_NONE, 'Option description')
-        ;
+            ->addOption('option1', null, InputOption::VALUE_NONE, 'Option description');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $this->logger->info('Command get:crmSites start');
+
         $io = new SymfonyStyle($input, $output);
 
         $start = microtime(true);
 
-        $response = $this->divaltoSiteService->fetchSites();
+        $this->divaltoSiteService->fetchSites();
 
-        $io->success(json_decode($response->getContent()));
+        $io->success('La commande fetchSites a été lancée en arrière-plan.');
 
         $end = microtime(true) - $start;
 
-        echo "temps global : " . $end . "\n";
+        $this->logger->info("temps global : " . $end . "\n");
 
-        return Command::SUCCESS ;
+        return Command::SUCCESS;
     }
 }
