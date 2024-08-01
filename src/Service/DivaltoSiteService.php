@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class DivaltoSiteService
 {
-    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private FolderManagerService $folderManagerService, private SshService $sshService, private LoggerInterface $logger)
+    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private DivaltoFolderManagerService $divaltoFolderManagerService, private SshService $sshService, private LoggerInterface $logger)
     {
     }
 
@@ -121,7 +121,7 @@ class DivaltoSiteService
                     }
                 }
             }
-            $this->folderManagerService->createOrUpdateFolderOnServer($siteFolderToCreate, $siteFolderToUpdate, $server);
+            $this->divaltoFolderManagerService->createOrUpdateFolderOnServer($siteFolderToCreate, $siteFolderToUpdate, $server);
         }
 
 

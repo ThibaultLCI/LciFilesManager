@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Consultation;
+use App\Entity\Server;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -10,7 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class DivaltoConsultationService
 {
-    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private FolderManagerService $folderManagerService, private SshService $sshService, private LoggerInterface $consultationLogger, private DivaltoTierService $divaltoTiersService)
+    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private SshService $sshService, private LoggerInterface $consultationLogger, private DivaltoTierService $divaltoTiersService, private DivaltoConsultationFolderManagerService $divaltoConsultationFolderManagerService)
     {
     }
 
@@ -78,23 +79,33 @@ class DivaltoConsultationService
 
     private function checkDatabaseConsultations($crmConsultations): JsonResponse
     {
-
         $consultationRepository = $this->em->getRepository(Consultation::class);
+        $nbNewConsultations = 0;
+        $nbUpdatedConsultations = 0;
+        $consultationFolderToCreate = [];
+        $consultationFolderToUpdate = [];
 
         foreach ($crmConsultations as $crmConsultation) {
-            $nbNewConsultations = 0;
-            $nbUpdatedConsultations = 0;
 
             if ($crmConsultation["opportunity"]["customer_ID"]) {
                 $tier = $this->divaltoTiersService->getTiersByCodeCustomer($crmConsultation["opportunity"]["customer_ID"]);
 
+                $nomEntreprise = $tier['name'];
+                $villeEntreprise = $tier['city'];
+                $departementEntreprise = substr($tier['postalCode'], 0, 2);
+                $nomConsultation = $crmConsultation["opportunity"]["label"];
+                $anneeCreationConsultation = substr($crmConsultation["opportunity"]["creationDate"], 0, 4);
+                $idConsultation = $crmConsultation["opportunity"]["codeopportunity"];
+                $folderName = "$nomEntreprise - $villeEntreprise - $departementEntreprise - $nomConsultation - $anneeCreationConsultation - $idConsultation";
+
                 $newConsultation = new Consultation();
-                $newConsultation->setNomEntreprise($tier['name'])
-                    ->setVilleEntreprise($tier['city'])
-                    ->setDepartementEntreprise(substr($tier['postalCode'], 0, 2))
-                    ->setNomConsultation($crmConsultation["opportunity"]["label"])
-                    ->setAnneeCreationConsultation($crmConsultation["opportunity"]["creationDate"])
-                    ->setIdConsultation($crmConsultation["opportunity"]["codeopportunity"]);
+                $newConsultation->setNomEntreprise($nomEntreprise)
+                    ->setVilleEntreprise($villeEntreprise)
+                    ->setDepartementEntreprise($departementEntreprise)
+                    ->setNomConsultation($nomConsultation)
+                    ->setAnneeCreationConsultation($anneeCreationConsultation)
+                    ->setIdConsultation($idConsultation)
+                    ->setFolderName($folderName);
 
                 $consultation = $consultationRepository->findOneBy([
                     'idConsultation' => $crmConsultation["opportunity"]["codeopportunity"],
@@ -103,14 +114,21 @@ class DivaltoConsultationService
                 if (!$consultation) {
                     $this->em->persist($newConsultation);
                     $nbNewConsultations++;
+                    array_push($consultationFolderToCreate, $newConsultation);
                 } else {
                     $hasUpdate = false;
-    
+                    $oldFolderName = $consultation->getFolderName();
+
+                    if ($consultation->getFolderName() != $newConsultation->getFolderName()) {
+                        $consultation->setFolderName($newConsultation->getFolderName());
+                        $hasUpdate = true;
+                    }
+
                     if ($consultation->getNomEntreprise() != $newConsultation->getNomEntreprise()) {
                         $consultation->setNomEntreprise($newConsultation->getNomEntreprise());
                         $hasUpdate = true;
                     }
-    
+
                     if ($consultation->getVilleEntreprise() != $newConsultation->getVilleEntreprise()) {
                         $consultation->setVilleEntreprise($newConsultation->getVilleEntreprise());
                         $hasUpdate = true;
@@ -130,16 +148,21 @@ class DivaltoConsultationService
                         $consultation->setAnneeCreationConsultation($newConsultation->getAnneeCreationConsultation());
                         $hasUpdate = true;
                     }
-    
+
                     if ($hasUpdate) {
+                        $consultation->setOldFolderName($oldFolderName);
+                        array_push($consultationFolderToUpdate, $consultation);
                         $nbUpdatedConsultations++;
                     }
                 }
             }
         }
 
-
         $this->em->flush();
+
+        $serverCommercial = $this->em->getRepository(Server::class)->findOneBy(['name' => 'commercial']);
+        $this->divaltoConsultationFolderManagerService->createOrUpdateFolderOnServer($consultationFolderToCreate, $consultationFolderToUpdate, $serverCommercial);
+
         $this->consultationLogger->info($nbNewConsultations . " consultation(s) ajouté, " . $nbUpdatedConsultations . " consultation(s) mis a jour");
         return new JsonResponse($nbNewConsultations . " consultation(s) ajouté, " . $nbUpdatedConsultations . " consultation(s) mis a jour");
     }

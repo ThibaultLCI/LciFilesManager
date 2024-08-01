@@ -9,7 +9,7 @@ use phpseclib3\Net\SSH2;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 
-class FolderManagerService
+class DivaltoFolderManagerService
 {
     public function __construct(private SshService $sshService, private LoggerInterface $logger)
     {

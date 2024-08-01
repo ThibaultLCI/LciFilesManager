@@ -8,7 +8,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class DivaltoTierService
 {
-    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private FolderManagerService $folderManagerService, private SshService $sshService, private LoggerInterface $logger)
+    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private SshService $sshService, private LoggerInterface $logger)
     {
     }
 

@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\ProjetRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ProjetRepository::class)]
@@ -27,6 +29,23 @@ class Projet
 
     #[ORM\Column(length: 255)]
     private ?string $idProjet = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $departementSite = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $folderName = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $oldFolderName = null;
+
+    #[ORM\OneToMany(mappedBy: 'projet', targetEntity: Consultation::class)]
+    private Collection $consultations;
+
+    public function __construct()
+    {
+        $this->consultations = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -89,6 +108,72 @@ class Projet
     public function setIdProjet(string $idProjet): static
     {
         $this->idProjet = $idProjet;
+
+        return $this;
+    }
+
+    public function getDepartementSite(): ?string
+    {
+        return $this->departementSite;
+    }
+
+    public function setDepartementSite(string $departementSite): static
+    {
+        $this->departementSite = $departementSite;
+
+        return $this;
+    }
+
+    public function getFolderName(): ?string
+    {
+        return $this->folderName;
+    }
+
+    public function setFolderName(string $folderName): static
+    {
+        $this->folderName = $folderName;
+
+        return $this;
+    }
+
+    public function getOldFolderName(): ?string
+    {
+        return $this->oldFolderName;
+    }
+
+    public function setOldFolderName(?string $oldFolderName): static
+    {
+        $this->oldFolderName = $oldFolderName;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Consultation>
+     */
+    public function getConsultations(): Collection
+    {
+        return $this->consultations;
+    }
+
+    public function addConsultation(Consultation $consultation): static
+    {
+        if (!$this->consultations->contains($consultation)) {
+            $this->consultations->add($consultation);
+            $consultation->setProjet($this);
+        }
+
+        return $this;
+    }
+
+    public function removeConsultation(Consultation $consultation): static
+    {
+        if ($this->consultations->removeElement($consultation)) {
+            // set the owning side to null (unless already changed)
+            if ($consultation->getProjet() === $this) {
+                $consultation->setProjet(null);
+            }
+        }
 
         return $this;
     }

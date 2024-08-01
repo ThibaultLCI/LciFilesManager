@@ -31,6 +31,15 @@ class Consultation
     #[ORM\Column(length: 255)]
     private ?string $idConsultation = null;
 
+    #[ORM\Column(length: 255)]
+    private ?string $folderName = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $oldFolderName = null;
+
+    #[ORM\ManyToOne(inversedBy: 'consultations')]
+    private ?Projet $projet = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -104,6 +113,42 @@ class Consultation
     public function setIdConsultation(string $idConsultation): static
     {
         $this->idConsultation = $idConsultation;
+
+        return $this;
+    }
+
+    public function getFolderName(): ?string
+    {
+        return $this->folderName;
+    }
+
+    public function setFolderName(string $folderName): static
+    {
+        $this->folderName = $folderName;
+
+        return $this;
+    }
+
+    public function getOldFolderName(): ?string
+    {
+        return $this->oldFolderName;
+    }
+
+    public function setOldFolderName(string $oldFolderName): static
+    {
+        $this->oldFolderName = $oldFolderName;
+
+        return $this;
+    }
+
+    public function getProjet(): ?Projet
+    {
+        return $this->projet;
+    }
+
+    public function setProjet(?Projet $projet): static
+    {
+        $this->projet = $projet;
 
         return $this;
     }
