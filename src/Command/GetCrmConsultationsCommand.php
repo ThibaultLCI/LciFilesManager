@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Entity\Server;
 use App\Service\DivaltoConsultationService;
 use App\Service\DivaltoProjetHasConsultationService;
 use App\Service\DivaltoProjetService;
@@ -28,21 +29,28 @@ class GetCrmConsultationsCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        try {
-            $this->consultationLogger->info('Command de recuperation Consultation');
-            $this->divaltoConsultationService->fetchConsultations();
+        $serverCommerial = $this->em->getRepository(Server::class)->findOneBy(['name' => 'commercial']);
 
-            // $this->projetLogger->info('Command de recuperation Consultation');
-            // $this->divaltoProjetService->fetchProjets();
+        if ($serverCommerial) {
+            try {
+                $this->consultationLogger->info('Command de recuperation Consultation');
+                $this->divaltoConsultationService->fetchConsultations();
 
-            // $this->projetHasConsultationLogger->info('Command de recuperation Relation projet Consultation');
-            // $this->divaltoProjetHasConsultationService->fetchRelations();
+                $this->projetLogger->info('Command de recuperation Consultation');
+                $this->divaltoProjetService->fetchProjets();
 
-            $io->success('You have a new command! Now make it your own! Pass --help to see your options.');
+                $this->projetHasConsultationLogger->info('Command de recuperation Relation projet Consultation');
+                $this->divaltoProjetHasConsultationService->fetchRelations();
 
-            return Command::SUCCESS;
-        } catch (\Throwable $th) {
-            $io->error($th->getMessage());
+                $io->success('You have a new command! Now make it your own! Pass --help to see your options.');
+
+                return Command::SUCCESS;
+            } catch (\Throwable $th) {
+                $io->error($th->getMessage());
+                return Command::FAILURE;
+            }
+        } else {
+            $io->error("Servr commercial non configuré");
             return Command::FAILURE;
         }
     }

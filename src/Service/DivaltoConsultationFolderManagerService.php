@@ -20,8 +20,6 @@ class DivaltoConsultationFolderManagerService
 
             $ssh = $this->sshService->connexion($server);
 
-            $this->initFoldersOnServers($ssh, $server);
-
             $commands = [];
 
             foreach ($consultationFolderToCreate as $consultationFolder) {
@@ -52,28 +50,10 @@ class DivaltoConsultationFolderManagerService
         }
     }
 
-    private function initFoldersOnServers(SSH2 $ssh, Server $server): void
-    {
-        foreach ($server->getFolders() as $folder) {
-            $baseFolder = $folder->getPath() . "\\000 - DEV CRM Commercial";
-            $projetFolder = $baseFolder . "\\Projet CRM";
-            $ConsultationFolder = $baseFolder . "\\Consultation CRM";
-
-            $checkFolderCommand = "if not exist \"$baseFolder\" (echo 0) else (echo 1)";
-            $output = $ssh->exec($checkFolderCommand);
-
-            if (trim($output) === '0') {
-                $ssh->exec("mkdir \"$projetFolder\"");
-                $ssh->exec("mkdir \"$ConsultationFolder\"");
-                $this->consultationLogger->info("initialisation du dossier commercial");
-            }
-        }
-    }
-
     private function generateCreateFolderCommand(Consultation $consultation, Folder $folder): string
     {
-        $baseFolder = $folder->getPath() . "\\000 - DEV CRM Commercial";
-        $consultationFolder = $baseFolder . "\\Consultation CRM\\";
+        $baseFolder = $folder->getPath();
+        $consultationFolder = $baseFolder . "\\\------ CONSULTATION CRM\\";
 
         $commands = [
             "mkdir \"$consultationFolder" . $consultation->getFolderName() . "\""
@@ -84,9 +64,8 @@ class DivaltoConsultationFolderManagerService
 
     private function generateEditFolderCommand(Consultation $consultation, Folder $folder): string
     {
-        $this->consultationLogger->info('here');
-        $baseFolder = $folder->getPath() . "\\000 - DEV CRM Commercial";
-        $consultationFolder = $baseFolder . "\\Consultation CRM\\";
+        $baseFolder = $folder->getPath();
+        $consultationFolder = $baseFolder . "\\\------ CONSULTATION CRM\\";
 
         $newFolderName = $consultation->getFolderName();
         $oldFolderName = $consultation->getOldFolderName();

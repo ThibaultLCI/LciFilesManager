@@ -20,8 +20,6 @@ class DivaltoProjetFolderManagerService
 
             $ssh = $this->sshService->connexion($server);
 
-            $this->initFoldersOnServers($ssh, $server);
-
             $commands = [];
 
             foreach ($projetFolderToCreate as $projetFolder) {
@@ -52,28 +50,10 @@ class DivaltoProjetFolderManagerService
         }
     }
 
-    private function initFoldersOnServers(SSH2 $ssh, Server $server): void
-    {
-        foreach ($server->getFolders() as $folder) {
-            $baseFolder = $folder->getPath() . "\\000 - DEV CRM Commercial";
-            $projetFolder = $baseFolder . "\\Projet CRM";
-            $ProjetFolder = $baseFolder . "\\Projet CRM";
-
-            $checkFolderCommand = "if not exist \"$baseFolder\" (echo 0) else (echo 1)";
-            $output = $ssh->exec($checkFolderCommand);
-
-            if (trim($output) === '0') {
-                $ssh->exec("mkdir \"$projetFolder\"");
-                $ssh->exec("mkdir \"$ProjetFolder\"");
-                $this->projetLogger->info("initialisation du dossier commercial");
-            }
-        }
-    }
-
     private function generateCreateFolderCommand(Projet $projet, Folder $folder): string
     {
-        $baseFolder = $folder->getPath() . "\\000 - DEV CRM Commercial";
-        $projetFolder = $baseFolder . "\\Projet CRM\\";
+        $baseFolder = $folder->getPath();
+        $projetFolder = $baseFolder . "\\------ PROJET CRM\\";
 
         $commands = [
             "mkdir \"$projetFolder" . $projet->getFolderName() . "\""
@@ -84,9 +64,8 @@ class DivaltoProjetFolderManagerService
 
     private function generateEditFolderCommand(Projet $projet, Folder $folder): string
     {
-        $this->projetLogger->info('here');
-        $baseFolder = $folder->getPath() . "\\000 - DEV CRM Commercial";
-        $projetFolder = $baseFolder . "\\Projet CRM\\";
+        $baseFolder = $folder->getPath();
+        $projetFolder = $baseFolder . "\\------ PROJET CRM\\";
 
         $newFolderName = $projet->getFolderName();
         $oldFolderName = $projet->getOldFolderName();

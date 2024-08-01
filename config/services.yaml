@@ -6,6 +6,7 @@
 parameters:
   divalto_customer_url: '%env(divalto_customer_url)%'
   divalto_consultation_url: '%env(divalto_consultation_url)%'
+  divalto_projetheader_url: '%env(divalto_projetheader_url)%'
   divalto_projetdetail_url: '%env(divalto_projetdetail_url)%'
 
   user_ssh:

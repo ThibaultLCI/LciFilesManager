@@ -22,7 +22,7 @@ class DivaltoProjetHasConsultationFolderManagerService
 
         $ssh = $this->sshService->connexion($server);
 
-        // $this->createProjetShortCutToConsultation($server, $ssh);
+        $this->createProjetShortCutToConsultation($server, $ssh);
         $this->createConsultationShortCutToProjet($server, $ssh);
 
         $this->sshService->deconnexion($ssh);
@@ -35,19 +35,18 @@ class DivaltoProjetHasConsultationFolderManagerService
         $commands = [];
 
         foreach ($server->getFolders() as $folder) {
-            $baseFolder = $folder->getPath() . "\\000 - DEV CRM Commercial";
+            $baseFolder = $folder->getPath();
 
-            $baseProjetFolderName = $baseFolder . "\\Projet CRM\\";
-            $baseConsultationFolder = $baseFolder . "\\Consultation CRM\\";
+            $baseProjetFolderName = $baseFolder . "\\------ PROJET CRM\\";
+            $baseConsultationFolder = $baseFolder . "\\------ CONSULTATION CRM\\";
 
             $checkFolderCommand = "if not exist \"$baseFolder\" (echo 0) else (echo 1)";
             $output = $ssh->exec($checkFolderCommand);
 
             foreach ($projets as $projet) {
 
-                // Supprimer tous les raccourcis existants dans le dossier du projet spécifique
-                $deleteAllShortcutsCommand = "for /D %i in (\"{$baseProjetFolderName}{$projet->getFolderName()}\\*\") do rmdir \"%i\"";
-                $ssh->exec($deleteAllShortcutsCommand);
+                $deleteAllJunctionsCommand = "for /D %i in (\"{$baseProjetFolderName}{$projet->getFolderName()}\\*\") do @fsutil reparsepoint query \"%i\" >nul 2>&1 && rmdir /s /q \"%i\"";
+                $ssh->exec($deleteAllJunctionsCommand);
 
                 foreach ($projet->getConsultations() as $key => $consultation) {
                     $consultationFolderNameTarget = $baseConsultationFolder . $consultation->getFolderName();
@@ -70,19 +69,18 @@ class DivaltoProjetHasConsultationFolderManagerService
         $commands = [];
 
         foreach ($server->getFolders() as $folder) {
-            $baseFolder = $folder->getPath() . "\\000 - DEV CRM Commercial";
+            $baseFolder = $folder->getPath();
 
-            $baseProjetFolderName = $baseFolder . "\\Projet CRM\\";
-            $baseConsultationFolder = $baseFolder . "\\Consultation CRM\\";
+            $baseProjetFolderName = $baseFolder . "\\------ PROJET CRM\\";
+            $baseConsultationFolder = $baseFolder . "\\------ CONSULTATION CRM\\";
 
             $checkFolderCommand = "if not exist \"$baseFolder\" (echo 0) else (echo 1)";
             $output = $ssh->exec($checkFolderCommand);
 
             foreach ($consultations as $consultation) {
 
-                // Supprimer tous les raccourcis existants dans le dossier du projet spécifique
-                $deleteAllShortcutsCommand = "for /D %i in (\"{$baseConsultationFolder}{$consultation->getFolderName()}\\*\") do rmdir \"%i\"";
-                $ssh->exec($deleteAllShortcutsCommand);
+                $deleteAllJunctionsCommand = "for /D %i in (\"{$baseConsultationFolder}{$consultation->getFolderName()}\\*\") do @fsutil reparsepoint query \"%i\" >nul 2>&1 && rmdir /s /q \"%i\"";
+                $ssh->exec($deleteAllJunctionsCommand);
 
                 if ($consultation->getProjet()) {
                     $projetFolderNameTarget = $baseProjetFolderName . $consultation->getProjet()->getFolderName();
