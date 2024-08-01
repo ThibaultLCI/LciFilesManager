@@ -80,7 +80,7 @@ class DivaltoProjetService
     private function checkDatabaseProjets($crmProjets): JsonResponse
     {
         $projetRepository = $this->em->getRepository(Projet::class);
-        $nbNewProjets= 0;
+        $nbNewProjets = 0;
         $nbUpdatedProjets = 0;
         $projetFolderToCreate = [];
         $projetFolderToUpdate = [];
@@ -90,10 +90,12 @@ class DivaltoProjetService
             if ($crmProjet["dealgroupheader"]["final_customer_ID"]) {
                 $tier = $this->divaltoTierService->getTiersByCodeCustomer($crmProjet["dealgroupheader"]["final_customer_ID"]);
 
+                $forbiddenChars = array('\\', '/' , ':', '*', '?', '"', '<', '>', '|');
+
                 $nomSite = $tier['name'];
                 $villeSite = $tier['city'];
                 $departementSite = substr($tier['postalCode'], 0, 2);
-                $nomProjet = $crmProjet["dealgroupheader"]["label"];
+                $nomProjet = str_replace($forbiddenChars, '', $crmProjet["dealgroupheader"]["label"]);
                 $anneeCreationProjet = substr($crmProjet["dealgroupheader"]["final_date_creation"], 0, 4);
                 $idProjet = $crmProjet["dealgroupheader"]["codedealgroupheader"];
                 $folderName = "$nomSite - $villeSite - $departementSite - $nomProjet - $anneeCreationProjet - $idProjet";

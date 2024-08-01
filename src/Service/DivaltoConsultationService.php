@@ -90,10 +90,12 @@ class DivaltoConsultationService
             if ($crmConsultation["opportunity"]["customer_ID"]) {
                 $tier = $this->divaltoTiersService->getTiersByCodeCustomer($crmConsultation["opportunity"]["customer_ID"]);
 
+                $forbiddenChars = array('\\', '/' , ':', '*', '?', '"', '<', '>', '|');
+
                 $nomEntreprise = $tier['name'];
                 $villeEntreprise = $tier['city'];
                 $departementEntreprise = substr($tier['postalCode'], 0, 2);
-                $nomConsultation = $crmConsultation["opportunity"]["label"];
+                $nomConsultation = str_replace($forbiddenChars, '', $crmConsultation["opportunity"]["label"]);
                 $anneeCreationConsultation = substr($crmConsultation["opportunity"]["creationDate"], 0, 4);
                 $idConsultation = $crmConsultation["opportunity"]["codeopportunity"];
                 $folderName = "$nomEntreprise - $villeEntreprise - $departementEntreprise - $nomConsultation - $anneeCreationConsultation - $idConsultation";
