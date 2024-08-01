@@ -33,11 +33,11 @@ class GetCrmConsultationsCommand extends Command
 
         if ($serverCommerial) {
             try {
-                $this->consultationLogger->info('Command de recuperation Consultation');
-                $this->divaltoConsultationService->fetchConsultations();
+                // $this->consultationLogger->info('Command de recuperation Consultation');
+                // $this->divaltoConsultationService->fetchConsultations();
 
-                $this->projetLogger->info('Command de recuperation Consultation');
-                $this->divaltoProjetService->fetchProjets();
+                // $this->projetLogger->info('Command de recuperation Consultation');
+                // $this->divaltoProjetService->fetchProjets();
 
                 $this->projetHasConsultationLogger->info('Command de recuperation Relation projet Consultation');
                 $this->divaltoProjetHasConsultationService->fetchRelations();

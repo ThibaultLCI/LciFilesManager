@@ -71,6 +71,7 @@ class DivaltoProjetHasConsultationFolderManagerService
         foreach ($server->getFolders() as $folder) {
             $baseFolder = $folder->getPath();
 
+            $devisFolder = $baseFolder . "\\------ DEVIS\\";
             $baseProjetFolderName = $baseFolder . "\\------ PROJET CRM\\";
             $baseConsultationFolder = $baseFolder . "\\------ CONSULTATION CRM\\";
 
@@ -85,9 +86,14 @@ class DivaltoProjetHasConsultationFolderManagerService
                 if ($consultation->getProjet()) {
                     $projetFolderNameTarget = $baseProjetFolderName . $consultation->getProjet()->getFolderName();
                     $projetShortcutName = $baseConsultationFolder . $consultation->getFolderName() . "\\" . $consultation->getProjet()->getFolderName();
-
+                    
                     $commands[] =  "mklink /J \"$projetShortcutName\" \"$projetFolderNameTarget\"";
                 }
+
+                $devisFolderNameTarget = $devisFolder . "Devis " . $consultation->getAnneeCreationConsultation();
+                $devisShortcutName = $baseConsultationFolder . $consultation->getFolderName() . "\\Devis " . $consultation->getAnneeCreationConsultation();
+
+                $commands[] =  "mklink /J \"$devisShortcutName\" \"$devisFolderNameTarget\"";
 
                 foreach ($commands as $command) {
                     $ssh->exec($command);
