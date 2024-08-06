@@ -116,6 +116,7 @@ class DivaltoProjetHasConsultationService
         }
 
         $this->em->flush();
+        $this->projetHasConsultationLogger->info("Relation Projet <=> Consultation créée");
         $this->divaltoProjetHasConsultationFolderManagerService->manageShortCut();
     }
 

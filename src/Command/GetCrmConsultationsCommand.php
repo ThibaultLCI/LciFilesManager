@@ -33,16 +33,16 @@ class GetCrmConsultationsCommand extends Command
 
         if ($serverCommerial) {
             try {
-                $this->consultationLogger->info('Command de recuperation Consultation');
+                $this->consultationLogger->info('Command de recuperation Consultations');
                 $this->divaltoConsultationService->fetchConsultations();
 
-                $this->projetLogger->info('Command de recuperation Consultation');
+                $this->projetLogger->info('Command de recuperation Projets');
                 $this->divaltoProjetService->fetchProjets();
 
-                $this->projetHasConsultationLogger->info('Command de recuperation Relation projet Consultation');
+                $this->projetHasConsultationLogger->info('Command de recuperation Relation projets Consultations');
                 $this->divaltoProjetHasConsultationService->fetchRelations();
 
-                $io->success('You have a new command! Now make it your own! Pass --help to see your options.');
+                $io->success('Syncronisation des projet et des consultation reussi');
 
                 return Command::SUCCESS;
             } catch (\Throwable $th) {
@@ -50,7 +50,7 @@ class GetCrmConsultationsCommand extends Command
                 return Command::FAILURE;
             }
         } else {
-            $io->error("Servr commercial non configuré");
+            $io->error("Server commercial non configuré");
             return Command::FAILURE;
         }
     }

@@ -12,7 +12,7 @@ use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 
 class DivaltoProjetHasConsultationFolderManagerService
 {
-    function __construct(private EntityManagerInterface $em, private SshService $sshService, private LoggerInterface $projectHasConsultationlogger)
+    function __construct(private EntityManagerInterface $em, private SshService $sshService, private LoggerInterface $projetHasConsultationLogger)
     {
     }
 
@@ -24,6 +24,8 @@ class DivaltoProjetHasConsultationFolderManagerService
 
         $this->createProjetShortCutToConsultation($server, $ssh);
         $this->createConsultationShortCutToProjet($server, $ssh);
+
+        $this->projetHasConsultationLogger->info("Les raccourcis ont eté créées/modifié");
 
         $this->sshService->deconnexion($ssh);
     }

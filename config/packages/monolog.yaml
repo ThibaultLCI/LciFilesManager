@@ -1,5 +1,5 @@
 monolog:
-    channels: ['deprecation', 'consultation',projet,'projetHasConsultation']
+    channels: ['deprecation', 'consultation','projet','projetHasConsultation']
 
 
 when@dev:
@@ -9,7 +9,7 @@ when@dev:
                 type: stream
                 path: "%kernel.logs_dir%/%kernel.environment%.log"
                 level: debug
-                channels: ["!event","!consultation","!deprecation"]
+                channels: ["!event","!consultation","!deprecation",'!deprecation', '!consultation','!projet','!projetHasConsultation']
             deprecation:
                 type: rotating_file
                 path: "%kernel.logs_dir%/%kernel.environment%.deprecations.log"
