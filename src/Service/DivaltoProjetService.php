@@ -154,7 +154,7 @@ class DivaltoProjetService
 
                     if ($hasUpdate) {
                         $projet->setOldFolderName($oldFolderName);
-                        array_push($projetFolderToUpdate, ["newName" => $projet->getFolderName(),"oldName" => $projet->getOldFolderName() ]);
+                        array_push($projetFolderToUpdate, ["newName" => $projet->getFolderName(), "oldName" => $projet->getOldFolderName()]);
                         $nbUpdatedProjets++;
                     }
                 }
@@ -168,6 +168,52 @@ class DivaltoProjetService
 
         $this->projetLogger->info($nbNewProjets . " projet(s) ajouté, " . $nbUpdatedProjets . " projet(s) mis a jour");
 
+        $this->markProjetForExport($crmProjets);
+
         return $commands;
+    }
+
+    private function markProjetForExport(array $projets)
+    {
+        $url = $this->params->get('divalto_projetheader_url');
+
+        foreach ($projets as $projet) {
+            try {
+                $params = [
+                    "header" =>
+                    [
+                        "languageCode" => "FR",
+                        "markForExport" => 0
+                    ],
+                    "action" =>
+                    [
+                        "verb" => "PUT",
+                    ],
+                    "data" => [
+                        "dealgroupheader" => [
+                            "codedealgroupheader" => $projet["dealgroupheader"]["codedealgroupheader"]
+                        ]
+                    ]
+                ];
+
+                $curl = curl_init();
+
+                curl_setopt($curl, CURLOPT_URL, $url);
+                curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+                curl_setopt($curl, CURLOPT_POST, 1);
+                curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($params));
+                curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($curl, CURLOPT_HTTPHEADER,     array('Content-Type: JSON'));
+                curl_setopt($curl, CURLINFO_HEADER_OUT, true);
+
+                $result = curl_exec($curl);
+
+                curl_close($curl);
+
+                $result = json_decode($result, true);
+            } catch (\Throwable $th) {
+                throw $th;
+            }
+        }
     }
 }

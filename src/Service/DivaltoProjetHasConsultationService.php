@@ -117,6 +117,7 @@ class DivaltoProjetHasConsultationService
 
         $this->em->flush();
         $this->projetHasConsultationLogger->info("Relation Projet <=> Consultation créée");
+        $this->markProjetDetailForExport($crmProjectConsultationRelations);
         return $this->consultationFolderManagerService->manageShortCut();
     }
 
@@ -133,6 +134,50 @@ class DivaltoProjetHasConsultationService
                 $projet->removeConsultation($consultation);
                 // Supprimer la consultation de l'EntityManager
                 $this->em->remove($consultation);
+            }
+        }
+    }
+
+    private function markProjetDetailForExport(array $projets)
+    {
+        $url = $this->params->get('divalto_projetdetail_url');
+
+        foreach ($projets as $projet) {
+            try {
+                $params = [
+                    "header" =>
+                    [
+                        "languageCode" => "FR",
+                        "markForExport" => 0
+                    ],
+                    "action" =>
+                    [
+                        "verb" => "PUT",
+                    ],
+                    "data" => [
+                        "dealgroupdetail" => [
+                            "codedealgroupdetail" => $projet["dealgroupdetail"]["codedealgroupdetail"]
+                        ]
+                    ]
+                ];
+
+                $curl = curl_init();
+
+                curl_setopt($curl, CURLOPT_URL, $url);
+                curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+                curl_setopt($curl, CURLOPT_POST, 1);
+                curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($params));
+                curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($curl, CURLOPT_HTTPHEADER,     array('Content-Type: JSON'));
+                curl_setopt($curl, CURLINFO_HEADER_OUT, true);
+
+                $result = curl_exec($curl);
+
+                curl_close($curl);
+
+                $result = json_decode($result, true);
+            } catch (\Throwable $th) {
+                throw $th;
             }
         }
     }

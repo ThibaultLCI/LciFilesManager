@@ -168,4 +168,51 @@ class DivaltoConsultationService
         $this->consultationLogger->info($nbNewConsultations . " consultation(s) ajouté, " . $nbUpdatedConsultations . " consultation(s) mis a jour");
         return $commands;
     }
+
+    private function markConsultationForExport(array $consultations)
+    {
+        $url = $this->params->get('divalto_consultation_url');
+
+        foreach ($consultations as $consultation) {
+            try {
+                $params = [
+                    "header" =>
+                    [
+                        "languageCode" => "FR",
+                        "markForExport" => 0
+                    ],
+                    "action" =>
+                    [
+                        "verb" => "PUT",
+                    ],
+                    "data" => [
+                        "opportunity" => [
+                            "codeopportunity" => $consultation["opportunity"]["codeopportunity"],
+                            "customer_ID" => $consultation["opportunity"]["customer_ID"],
+                            "label" =>  $consultation["opportunity"]["label"],
+                            "generictype_ID_opportunityType" =>  $consultation["opportunity"]["generictype_ID_opportunityType"],
+                        ]
+                    ]
+                ];
+
+                $curl = curl_init();
+
+                curl_setopt($curl, CURLOPT_URL, $url);
+                curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+                curl_setopt($curl, CURLOPT_POST, 1);
+                curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($params));
+                curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($curl, CURLOPT_HTTPHEADER,     array('Content-Type: JSON'));
+                curl_setopt($curl, CURLINFO_HEADER_OUT, true);
+
+                $result = curl_exec($curl);
+
+                curl_close($curl);
+
+                $result = json_decode($result, true);
+            } catch (\Throwable $th) {
+                throw $th;
+            }
+        }
+    }
 }

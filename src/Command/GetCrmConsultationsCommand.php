@@ -49,8 +49,6 @@ class GetCrmConsultationsCommand extends Command
 
                 $allCommands = array_merge($consultationCommands, $projetCommands, $relationCommands);
 
-                dump($allCommands);
-
                 $batches = array_chunk($allCommands, 20);
 
                 foreach ($batches as $batch) {
@@ -59,7 +57,6 @@ class GetCrmConsultationsCommand extends Command
 
                     if ($return) {
                         $this->consultationLogger->info($return);
-                        dump($return);
                     }
                 }
 
