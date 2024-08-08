@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class DivaltoProjetService
 {
-    public function __construct(private ParameterBagInterface $params, private LoggerInterface $projetLogger, private EntityManagerInterface $em, private DivaltoTierService $divaltoTierService, private DivaltoProjetFolderManagerService $divaltoProjetFolderManagerService)
+    public function __construct(private ParameterBagInterface $params, private LoggerInterface $projetLogger, private EntityManagerInterface $em, private DivaltoTierService $divaltoTierService, private ConsultationFolderManagerService $consultationFolderManagerService)
     {
     }
 
@@ -77,7 +77,7 @@ class DivaltoProjetService
         return $this->checkDatabaseProjets($projets);
     }
 
-    private function checkDatabaseProjets($crmProjets): JsonResponse
+    private function checkDatabaseProjets($crmProjets)
     {
         $projetRepository = $this->em->getRepository(Projet::class);
         $nbNewProjets = 0;
@@ -90,7 +90,7 @@ class DivaltoProjetService
             if ($crmProjet["dealgroupheader"]["final_customer_ID"]) {
                 $tier = $this->divaltoTierService->getTiersByCodeCustomer($crmProjet["dealgroupheader"]["final_customer_ID"]);
 
-                $forbiddenChars = array('\\', '/' , ':', '*', '?', '"', '<', '>', '|');
+                $forbiddenChars = array('\\', '/', ':', '*', '?', '"', '<', '>', '|');
 
                 $nomSite = $tier['name'];
                 $villeSite = $tier['city'];
@@ -117,7 +117,7 @@ class DivaltoProjetService
                 if (!$projet) {
                     $this->em->persist($newProjet);
                     $nbNewProjets++;
-                    array_push($projetFolderToCreate, $newProjet);
+                    array_push($projetFolderToCreate, $newProjet->getFolderName());
                 } else {
                     $hasUpdate = false;
                     $oldFolderName = $projet->getFolderName();
@@ -154,7 +154,7 @@ class DivaltoProjetService
 
                     if ($hasUpdate) {
                         $projet->setOldFolderName($oldFolderName);
-                        array_push($projetFolderToUpdate, $projet);
+                        array_push($projetFolderToUpdate, ["newName" => $projet->getFolderName(),"oldName" => $projet->getOldFolderName() ]);
                         $nbUpdatedProjets++;
                     }
                 }
@@ -164,9 +164,10 @@ class DivaltoProjetService
         $this->em->flush();
 
         $serverCommercial = $this->em->getRepository(Server::class)->findOneBy(['name' => 'commercial']);
-        $this->divaltoProjetFolderManagerService->createOrUpdateFolderOnServer($projetFolderToCreate, $projetFolderToUpdate, $serverCommercial);
+        $commands = $this->consultationFolderManagerService->createOrUpdateFolderOnServer($projetFolderToCreate, $projetFolderToUpdate, $serverCommercial, "\\------ PROJET CRM\\");
 
         $this->projetLogger->info($nbNewProjets . " projet(s) ajouté, " . $nbUpdatedProjets . " projet(s) mis a jour");
-        return new JsonResponse($nbNewProjets . " projet(s) ajouté, " . $nbUpdatedProjets . " projet(s) mis a jour");
+
+        return $commands;
     }
 }

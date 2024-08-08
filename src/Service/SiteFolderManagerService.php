@@ -3,13 +3,11 @@
 namespace App\Service;
 
 use App\Entity\Server;
-use App\Entity\Site;
-use phpseclib3\Net\SFTP;
 use phpseclib3\Net\SSH2;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 
-class DivaltoFolderManagerService
+class SiteFolderManagerService
 {
     public function __construct(private SshService $sshService, private LoggerInterface $logger)
     {

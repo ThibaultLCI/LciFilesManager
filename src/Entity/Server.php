@@ -24,7 +24,7 @@ class Server
     #[ORM\Column]
     private ?int $port = null;
 
-    #[ORM\OneToMany(mappedBy: 'server', targetEntity: Folder::class)]
+    #[ORM\OneToMany(mappedBy: 'server', targetEntity: Folder::class, cascade: ["PERSIST"])]
     private Collection $folders;
 
     public function __construct()

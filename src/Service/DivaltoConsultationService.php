@@ -11,11 +11,11 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class DivaltoConsultationService
 {
-    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private SshService $sshService, private LoggerInterface $consultationLogger, private DivaltoTierService $divaltoTiersService, private DivaltoConsultationFolderManagerService $divaltoConsultationFolderManagerService)
+    public function __construct(private EntityManagerInterface $em, private ParameterBagInterface $params, private SshService $sshService, private LoggerInterface $consultationLogger, private DivaltoTierService $divaltoTiersService, private ConsultationFolderManagerService $consultationFolderManagerService)
     {
     }
 
-    public function fetchConsultations(): JsonResponse
+    public function fetchConsultations(): array
     {
         $url = $this->params->get('divalto_consultation_url');
 
@@ -77,7 +77,7 @@ class DivaltoConsultationService
         return $this->checkDatabaseConsultations($consultations);
     }
 
-    private function checkDatabaseConsultations($crmConsultations): JsonResponse
+    private function checkDatabaseConsultations($crmConsultations): array
     {
         $consultationRepository = $this->em->getRepository(Consultation::class);
         $nbNewConsultations = 0;
@@ -90,7 +90,7 @@ class DivaltoConsultationService
             if ($crmConsultation["opportunity"]["customer_ID"]) {
                 $tier = $this->divaltoTiersService->getTiersByCodeCustomer($crmConsultation["opportunity"]["customer_ID"]);
 
-                $forbiddenChars = array('\\', '/' , ':', '*', '?', '"', '<', '>', '|');
+                $forbiddenChars = array('\\', '/', ':', '*', '?', '"', '<', '>', '|');
 
                 $nomEntreprise = $tier['name'];
                 $villeEntreprise = $tier['city'];
@@ -116,7 +116,7 @@ class DivaltoConsultationService
                 if (!$consultation) {
                     $this->em->persist($newConsultation);
                     $nbNewConsultations++;
-                    array_push($consultationFolderToCreate, $newConsultation);
+                    array_push($consultationFolderToCreate, $newConsultation->getFolderName());
                 } else {
                     $hasUpdate = false;
                     $oldFolderName = $consultation->getFolderName();
@@ -153,7 +153,7 @@ class DivaltoConsultationService
 
                     if ($hasUpdate) {
                         $consultation->setOldFolderName($oldFolderName);
-                        array_push($consultationFolderToUpdate, $consultation);
+                        array_push($consultationFolderToUpdate, ["newName" => $consultation->getFolderName(), "oldName" => $consultation->getOldFolderName()]);
                         $nbUpdatedConsultations++;
                     }
                 }
@@ -163,9 +163,9 @@ class DivaltoConsultationService
         $this->em->flush();
 
         $serverCommercial = $this->em->getRepository(Server::class)->findOneBy(['name' => 'commercial']);
-        $this->divaltoConsultationFolderManagerService->createOrUpdateFolderOnServer($consultationFolderToCreate, $consultationFolderToUpdate, $serverCommercial);
+        $commands = $this->consultationFolderManagerService->createOrUpdateFolderOnServer($consultationFolderToCreate, $consultationFolderToUpdate, $serverCommercial, "\\------ CONSULTATION CRM\\");
 
         $this->consultationLogger->info($nbNewConsultations . " consultation(s) ajouté, " . $nbUpdatedConsultations . " consultation(s) mis a jour");
-        return new JsonResponse($nbNewConsultations . " consultation(s) ajouté, " . $nbUpdatedConsultations . " consultation(s) mis a jour");
+        return $commands;
     }
 }

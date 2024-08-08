@@ -1,5 +1,5 @@
 monolog:
-    channels: ['deprecation', 'consultation','projet','projetHasConsultation']
+    channels: ['deprecation', 'consultation','projet','projetHasConsultation', folder]
 
 
 when@dev:
@@ -34,6 +34,11 @@ when@dev:
                 level: debug
                 path:     '%kernel.logs_dir%/projetHasConsultation.log'
                 channels: "projetHasConsultation"
+            folder:
+                type: stream
+                level: debug
+                path:     '%kernel.logs_dir%/folder.log'
+                channels: "folder"
 
 
 when@test:

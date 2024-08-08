@@ -4,6 +4,7 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+  app_public_dir: "%kernel.project_dir%/public/"
   divalto_customer_url: '%env(divalto_customer_url)%'
   divalto_consultation_url: '%env(divalto_consultation_url)%'
   divalto_projetheader_url: '%env(divalto_projetheader_url)%'

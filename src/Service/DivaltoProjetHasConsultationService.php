@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class DivaltoProjetHasConsultationService
 {
-    public function __construct(private ParameterBagInterface $params, private LoggerInterface $projetHasConsultationLogger, private EntityManagerInterface $em, private DivaltoProjetHasConsultationFolderManagerService $divaltoProjetHasConsultationFolderManagerService)
+    public function __construct(private ParameterBagInterface $params, private LoggerInterface $projetHasConsultationLogger, private EntityManagerInterface $em, private ConsultationFolderManagerService $consultationFolderManagerService)
     {
     }
 
@@ -78,7 +78,7 @@ class DivaltoProjetHasConsultationService
         return $this->makeProjectConsultationRelation($relations);
     }
 
-    private function makeProjectConsultationRelation($crmProjectConsultationRelations)
+    private function makeProjectConsultationRelation($crmProjectConsultationRelations) : array
     {
 
         $relations = [];
@@ -117,7 +117,7 @@ class DivaltoProjetHasConsultationService
 
         $this->em->flush();
         $this->projetHasConsultationLogger->info("Relation Projet <=> Consultation créée");
-        $this->divaltoProjetHasConsultationFolderManagerService->manageShortCut();
+        return $this->consultationFolderManagerService->manageShortCut();
     }
 
     public function removeNotFindConsultation(Projet $projet, array $consultations)
