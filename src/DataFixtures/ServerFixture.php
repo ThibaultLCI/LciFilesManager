@@ -12,38 +12,38 @@ class ServerFixture extends Fixture
     public function load(ObjectManager $manager): void
     {
         $servers = [
-            // [
-            //     "nom" => "Photos",
-            //     "ip" => "10.1.10.14",
-            //     "port" => 22,
-            //     "folders" => [
-            //         "F:/Photos"
-            //     ]
-            // ],
-            // [
-            //     "nom" => "SAV France",
-            //     "ip" => "10.2.10.11",
-            //     "port" => 22,
-            //     "folders" => [
-            //         "D:/Data/Partages"
-            //     ]
-            // ],
             [
-                "nom" => "Commercial",
+                "nom" => "Photos",
+                "ip" => "10.1.10.14",
+                "port" => 22,
+                "folders" => [
+                    "F:/Photos"
+                ]
+            ],
+            [
+                "nom" => "SAV France",
+                "ip" => "10.2.10.11",
+                "port" => 22,
+                "folders" => [
+                    "D:/Data/Partages"
+                ]
+            ],
+            [
+                "nom" => "CRM",
                 "ip" => "10.1.10.36",
                 "port" => 22,
                 "folders" => [
                     "E:/CRM"
                 ]
             ],
-            // [
-            //     "nom" => "Commercial",
-            //     "ip" => "10.1.10.11",
-            //     "port" => 22,
-            //     "folders" => [
-            //         "F:\Datas\Partages\------ COMMERCIAL"
-            //     ]
-            // ],
+            [
+                "nom" => "Commercial",
+                "ip" => "10.1.10.11",
+                "port" => 22,
+                "folders" => [
+                    "F:\Datas\Partages\------ COMMERCIAL"
+                ]
+            ],
         ];
 
         foreach ($servers as $server) {
