@@ -75,10 +75,10 @@ class DivaltoProjetHasConsultationService
 
         $this->projetHasConsultationLogger->info(count($relations) . " Relation Récupéré");
 
-        return $this->makeProjectConsultationRelation($relations);
+        $this->makeProjectConsultationRelation($relations);
     }
 
-    private function makeProjectConsultationRelation($crmProjectConsultationRelations) : array
+    private function makeProjectConsultationRelation($crmProjectConsultationRelations) 
     {
 
         $relations = [];
@@ -118,7 +118,7 @@ class DivaltoProjetHasConsultationService
         $this->em->flush();
         $this->projetHasConsultationLogger->info("Relation Projet <=> Consultation créée");
         $this->markProjetDetailForExport($crmProjectConsultationRelations);
-        return $this->consultationFolderManagerService->manageShortCut();
+        $this->consultationFolderManagerService->manageShortCut();
     }
 
     public function removeNotFindConsultation(Projet $projet, array $consultations)

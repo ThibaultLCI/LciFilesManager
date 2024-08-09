@@ -11,9 +11,7 @@ use Psr\Log\LoggerInterface;
 
 class ConsultationFolderManagerService
 {
-    public function __construct(private LoggerInterface $folderLogger, private EntityManagerInterface $em, private SshService $sshService)
-    {
-    }
+    public function __construct(private LoggerInterface $folderLogger, private EntityManagerInterface $em, private SshService $sshService) {}
 
     function createOrUpdateFolderOnServer(array $foldersToCreate, array $foldersToUpdate, Server $server, string $parentFolder)
     {
@@ -32,9 +30,8 @@ class ConsultationFolderManagerService
                     $commands[] = $this->generateEditFolderCommand($folderToUpdate, $folder, $parentFolder);
                 }
             }
+            $this->executeCommands($server, $commands, "Creation/modification des dossier (" . $parentFolder . " )");
         }
-
-        return $commands;
     }
 
     private function generateCreateFolderCommand(string $folderTocreate, Folder $folder, string $parentFolder): string
@@ -65,20 +62,15 @@ class ConsultationFolderManagerService
 
     public function manageShortCut()
     {
-        $commands = [];
         $server = $this->em->getRepository(Server::class)->findOneBy(['name' => 'commercial']);
 
-        $projetShortcutCommands = $this->createProjetShortCutToConsultation($server);
-        $consultationShortcutCommands = $this->createConsultationShortCutToProjet($server);
+        $this->createProjetShortCutToConsultation($server);
+        $this->createConsultationShortCutToProjet($server);
 
         $this->folderLogger->info("Les raccourcis ont eté créées/modifié");
-
-        $commands = array_merge($projetShortcutCommands, $consultationShortcutCommands);
-
-        return $commands;
     }
 
-    private function createProjetShortCutToConsultation(Server $server): array
+    private function createProjetShortCutToConsultation(Server $server)
     {
         $projets = $this->em->getRepository(Projet::class)->findAll();
 
@@ -105,17 +97,17 @@ class ConsultationFolderManagerService
             }
         }
 
-        $this->executeDeleteCommands($deleteCommands);
-
-        return $commands;
+        $this->executeCommands($server, $deleteCommands, "Suprression des raccourcis dans les projets");
+        $this->executeCommands($server, $commands, "Creation des raccourcis dans les projets vers les consultations");
     }
 
-    private function createConsultationShortCutToProjet(Server $server): array
+    private function createConsultationShortCutToProjet(Server $server)
     {
         $consultations = $this->em->getRepository(Consultation::class)->findAll();
 
-        $deleteCommands = [];        
+        $deleteCommands = [];
         $commands = [];
+        $devisCommands = [];
 
         foreach ($server->getFolders() as $folder) {
             $baseFolder = $folder->getPath();
@@ -135,32 +127,33 @@ class ConsultationFolderManagerService
                     $commands[] =  "mklink /J \"$projetShortcutName\" \"$projetFolderNameTarget\"";
                 }
 
-                // $devisFolderNameTarget = $devisFolder . "Devis " . $consultation->getAnneeCreationConsultation();
-                // $devisShortcutName = $baseConsultationFolder . $consultation->getFolderName() . "\\Devis " . $consultation->getAnneeCreationConsultation();
+                $devisFolderNameTarget = $devisFolder . "Devis " . $consultation->getAnneeCreationConsultation();
+                $devisShortcutName = $baseConsultationFolder . $consultation->getFolderName() . "\\Devis " . $consultation->getAnneeCreationConsultation();
 
-                // $commands[] =  "mklink /J \"$devisShortcutName\" \"$devisFolderNameTarget\"";
+                $devisCommands[] =  "mklink /J \"$devisShortcutName\" \"$devisFolderNameTarget\"";
             }
         }
-        
-        $this->executeDeleteCommands($deleteCommands);
-        return $commands;
+
+        $this->executeCommands($server, $deleteCommands, "Suprression des raccourcis dans les consultations");
+        $this->executeCommands($server, $commands, "Creation des raccourcis dans les consultations vers le projet");
+        $this->executeCommands($server, $devisCommands, "Creation des raccourcis dans les consultations vers le dossier devis");
     }
 
-    private function executeDeleteCommands(array $commands)
+    private function executeCommands(Server $server, array $commands, string $log = null)
     {
-        $server = $this->em->getRepository(Server::class)->findOneBy(['name' => 'Commercial']);
-        $ssh = $this->sshService->connexion($server) ;
+        $ssh = $this->sshService->connexion($server);
 
-        foreach ($commands as $command) {
-            try {
-                $output = $ssh->exec($command);
-                $this->folderLogger->info("Executed command: $command, Output: $output");
-            } catch (\Exception $e) {
-                $this->folderLogger->error("Error executing command: $command, Error: " . $e->getMessage());
-            }
+        $batches = array_chunk($commands, 20);
+
+        foreach ($batches as $batch) {
+            $allCommands = implode(' && ', $batch);
+            $ssh->exec($allCommands);
         }
 
-        $this->sshService->connexion($server) ;
+        if ($log) {
+            $this->folderLogger->info($log);
+        }
 
+        $this->sshService->deconnexion($ssh);
     }
 }

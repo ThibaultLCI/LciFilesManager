@@ -23,7 +23,7 @@ use Symfony\Component\Filesystem\Filesystem;
 )]
 class GetCrmConsultationsCommand extends Command
 {
-    public function __construct(private LoggerInterface $consultationLogger, private EntityManagerInterface $em, private DivaltoConsultationService $divaltoConsultationService, private LoggerInterface $projetLogger, private DivaltoProjetService $divaltoProjetService,  private LoggerInterface $projetHasConsultationLogger, private DivaltoProjetHasConsultationService $divaltoProjetHasConsultationService, private SshService $sshService, private ParameterBagInterface $params)
+    public function __construct(private LoggerInterface $consultationLogger, private EntityManagerInterface $em, private DivaltoConsultationService $divaltoConsultationService, private LoggerInterface $projetLogger, private DivaltoProjetService $divaltoProjetService,  private LoggerInterface $projetHasConsultationLogger, private DivaltoProjetHasConsultationService $divaltoProjetHasConsultationService, private ParameterBagInterface $params)
     {
         parent::__construct();
     }
@@ -42,33 +42,15 @@ class GetCrmConsultationsCommand extends Command
             if (!$fileSystem->exists($file)) {
                 try {
                     $fileSystem->touch($file);
-                    $ssh = $this->sshService->connexion($serverCommerial);
-
-                    $allCommands = [];
 
                     $this->consultationLogger->info('Command de recuperation Consultations');
-                    $consultationCommands = $this->divaltoConsultationService->fetchConsultations();
+                    $this->divaltoConsultationService->fetchConsultations();
 
                     $this->projetLogger->info('Command de recuperation Projets');
-                    $projetCommands = $this->divaltoProjetService->fetchProjets();
+                    $this->divaltoProjetService->fetchProjets();
 
                     $this->projetHasConsultationLogger->info('Command de recuperation Relation projets Consultations');
-                    $relationCommands = $this->divaltoProjetHasConsultationService->fetchRelations();
-
-                    $allCommands = array_merge($consultationCommands, $projetCommands, $relationCommands);
-
-                    $batches = array_chunk($allCommands, 20);
-
-                    foreach ($batches as $batch) {
-                        $allCommands = implode(' && ', $batch);
-                        $return = $ssh->exec($allCommands);
-
-                        if ($return) {
-                            $this->consultationLogger->info($return);
-                        }
-                    }
-
-                    $this->sshService->deconnexion($ssh);
+                    $this->divaltoProjetHasConsultationService->fetchRelations();
 
                     $io->success('Syncronisation des projet et des consultation reussi');
                     $fileSystem->remove($file);
@@ -78,8 +60,7 @@ class GetCrmConsultationsCommand extends Command
                     $fileSystem->remove($file);
                     return Command::FAILURE;
                 }
-            }
-            else{
+            } else {
                 $io->error("syncro deja en cours");
                 return Command::FAILURE;
             }

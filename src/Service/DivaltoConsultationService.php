@@ -15,7 +15,7 @@ class DivaltoConsultationService
     {
     }
 
-    public function fetchConsultations(): array
+    public function fetchConsultations()
     {
         $url = $this->params->get('divalto_consultation_url');
 
@@ -77,7 +77,7 @@ class DivaltoConsultationService
         return $this->checkDatabaseConsultations($consultations);
     }
 
-    private function checkDatabaseConsultations($crmConsultations): array
+    private function checkDatabaseConsultations($crmConsultations)
     {
         $consultationRepository = $this->em->getRepository(Consultation::class);
         $nbNewConsultations = 0;
