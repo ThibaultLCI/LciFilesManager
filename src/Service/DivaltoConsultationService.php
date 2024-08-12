@@ -74,6 +74,8 @@ class DivaltoConsultationService
 
         $this->consultationLogger->info(count($consultations) . " Consultations Récupéré");
 
+        $this->markConsultationForExport($consultations);
+
         return $this->checkDatabaseConsultations($consultations);
     }
 
