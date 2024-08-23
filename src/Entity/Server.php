@@ -27,6 +27,9 @@ class Server
     #[ORM\OneToMany(mappedBy: 'server', targetEntity: Folder::class, cascade: ["PERSIST"])]
     private Collection $folders;
 
+    #[ORM\Column]
+    private ?bool $isServerCommercial = false;
+
     public function __construct()
     {
         $this->folders = new ArrayCollection();
@@ -99,6 +102,18 @@ class Server
                 $folder->setServer(null);
             }
         }
+
+        return $this;
+    }
+
+    public function isIsServerCommercial(): ?bool
+    {
+        return $this->isServerCommercial;
+    }
+
+    public function setIsServerCommercial(bool $isServerCommercial): static
+    {
+        $this->isServerCommercial = $isServerCommercial;
 
         return $this;
     }

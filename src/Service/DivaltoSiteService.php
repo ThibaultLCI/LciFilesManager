@@ -103,7 +103,7 @@ class DivaltoSiteService
 
         $infoSite = $this->addOrUpdateSites($crmSites);
 
-        foreach ($serverRepository->findAll() as $server) {
+        foreach ($serverRepository->findBy(['isServerCommercial' => false]) as $server) {
             $siteFolderToCreate = [];
             $siteFolderToUpdate = [];
 

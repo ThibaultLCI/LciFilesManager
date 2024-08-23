@@ -163,7 +163,7 @@ class DivaltoProjetService
 
         $this->em->flush();
 
-        $serverCommercial = $this->em->getRepository(Server::class)->findOneBy(['name' => 'commercial']);
+        $serverCommercial = $this->em->getRepository(Server::class)->findOneBy(['isServerCommercial' => true]);
         $commands = $this->consultationFolderManagerService->createOrUpdateFolderOnServer($projetFolderToCreate, $projetFolderToUpdate, $serverCommercial, "\\------ PROJET CRM\\");
 
         $this->projetLogger->info($nbNewProjets . " projet(s) ajouté, " . $nbUpdatedProjets . " projet(s) mis a jour");

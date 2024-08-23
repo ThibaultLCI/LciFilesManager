@@ -16,6 +16,7 @@ class ServerFixture extends Fixture
                 "nom" => "Photos",
                 "ip" => "10.1.10.14",
                 "port" => 22,
+                "isServerCommercial" => false,
                 "folders" => [
                     "F:/Photos"
                 ]
@@ -24,22 +25,16 @@ class ServerFixture extends Fixture
                 "nom" => "SAV France",
                 "ip" => "10.2.10.11",
                 "port" => 22,
+                "isServerCommercial" => false,
                 "folders" => [
                     "D:/Data/Partages"
-                ]
-            ],
-            [
-                "nom" => "CRM",
-                "ip" => "10.1.10.36",
-                "port" => 22,
-                "folders" => [
-                    "E:/CRM"
                 ]
             ],
             [
                 "nom" => "Commercial",
                 "ip" => "10.1.10.11",
                 "port" => 22,
+                "isServerCommercial" => true,
                 "folders" => [
                     "F:\Datas\Partages\------ COMMERCIAL"
                 ]
@@ -51,7 +46,8 @@ class ServerFixture extends Fixture
 
             $newServer->setName($server["nom"])
                 ->setHost($server["ip"])
-                ->setPort($server["port"]);
+                ->setPort($server["port"])
+                ->setIsServerCommercial($server["isServerCommercial"]);
 
             foreach ($server["folders"] as $folder) {
                 $newFolder = new Folder();

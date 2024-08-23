@@ -62,7 +62,7 @@ class ConsultationFolderManagerService
 
     public function manageShortCut()
     {
-        $server = $this->em->getRepository(Server::class)->findOneBy(['name' => 'commercial']);
+        $server = $this->em->getRepository(Server::class)->findOneBy(['isServerCommercial' => true]);
 
         $this->createProjetShortCutToConsultation($server);
         $this->createConsultationShortCutToProjet($server);

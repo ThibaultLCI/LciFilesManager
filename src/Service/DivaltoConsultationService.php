@@ -164,7 +164,7 @@ class DivaltoConsultationService
 
         $this->em->flush();
 
-        $serverCommercial = $this->em->getRepository(Server::class)->findOneBy(['name' => 'commercial']);
+        $serverCommercial = $this->em->getRepository(Server::class)->findOneBy(['isServerCommercial' => true]);
         $commands = $this->consultationFolderManagerService->createOrUpdateFolderOnServer($consultationFolderToCreate, $consultationFolderToUpdate, $serverCommercial, "\\------ CONSULTATION CRM\\");
 
         $this->consultationLogger->info($nbNewConsultations . " consultation(s) ajouté, " . $nbUpdatedConsultations . " consultation(s) mis a jour");

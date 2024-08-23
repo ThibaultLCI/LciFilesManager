@@ -36,7 +36,7 @@ class GetCrmConsultationsCommand extends Command
         $file = $this->params->get('app_public_dir') . "consultationFlag.txt";
 
 
-        $serverCommerial = $this->em->getRepository(Server::class)->findOneBy(['name' => 'commercial']);
+        $serverCommerial = $this->em->getRepository(Server::class)->findOneBy(['isServerCommercial' => true]);
 
         if ($serverCommerial) {
             if (!$fileSystem->exists($file)) {
