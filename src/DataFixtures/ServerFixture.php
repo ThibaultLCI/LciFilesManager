@@ -12,60 +12,61 @@ class ServerFixture extends Fixture
     public function load(ObjectManager $manager): void
     {
         $servers = [
+            [
+                "nom" => "Photos",
+                "ip" => "10.1.10.14",
+                "port" => 22,
+                "isServerCommercial" => false,
+                "folders" => [
+                    "\\\SRV-CAR-ARCHIVE\Photos\---- CLIENTS CRM"
+                ]
+            ],
+            [
+                "nom" => "Wattviller",
+                "ip" => "10.2.10.11",
+                "port" => 22,
+                "isServerCommercial" => false,
+                "folders" => [
+                    "\\\SRV-WATT-DATA\Partages\------ SAV FRANCE CRM"
+                ]
+            ],
+            [
+                "nom" => "Carvin",
+                "ip" => "10.1.10.11",
+                "port" => 22,
+                "isServerCommercial" => true,
+                "folders" => [
+                    "\\\SRV-CAR-DATA\Partages\------ COMMERCIAL"
+                ]
+            ],
+            //For Test
             // [
             //     "nom" => "Photos",
-            //     "ip" => "10.1.10.14",
+            //     "ip" => "10.1.10.36",
             //     "port" => 22,
             //     "isServerCommercial" => false,
             //     "folders" => [
-            //         "F:/Photos"
+            //         "\\\SRV-CAR-CRM\CRM\------ CLIENTS CRM"
             //     ]
             // ],
             // [
             //     "nom" => "SAV France",
-            //     "ip" => "10.2.10.11",
+            //     "ip" => "10.1.10.36",
             //     "port" => 22,
             //     "isServerCommercial" => false,
             //     "folders" => [
-            //         "D:/Data/Partages"
+            //         "\\\SRV-CAR-CRM\CRM\------ SAV FRANCE CRM"
             //     ]
             // ],
             // [
             //     "nom" => "Commercial",
-            //     "ip" => "10.1.10.11",
+            //     "ip" => "10.1.10.36",
             //     "port" => 22,
             //     "isServerCommercial" => true,
             //     "folders" => [
-            //         "F:\Datas\Partages\------ COMMERCIAL"
+            //         "\\\SRV-CAR-CRM\CRM\------ COMMERCIAL"
             //     ]
             // ],
-            [
-                "nom" => "Photos",
-                "ip" => "10.1.10.36",
-                "port" => 22,
-                "isServerCommercial" => false,
-                "folders" => [
-                    "\\\SRV-CAR-CRM\CRM\------ CLIENTS CRM"
-                ]
-            ],
-            [
-                "nom" => "SAV France",
-                "ip" => "10.1.10.36",
-                "port" => 22,
-                "isServerCommercial" => false,
-                "folders" => [
-                    "\\\SRV-CAR-CRM\CRM\------ SAV FRANCE CRM"
-                ]
-            ],
-            [
-                "nom" => "Commercial",
-                "ip" => "10.1.10.36",
-                "port" => 22,
-                "isServerCommercial" => true,
-                "folders" => [
-                    "\\\SRV-CAR-CRM\CRM\------ COMMERCIAL"
-                ]
-            ],
         ];
 
         foreach ($servers as $server) {
