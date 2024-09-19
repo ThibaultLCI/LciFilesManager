@@ -9,9 +9,7 @@ use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 
 class SiteFolderManagerService
 {
-    public function __construct(private SshService $sshService, private LoggerInterface $logger)
-    {
-    }
+    public function __construct(private SshService $sshService, private LoggerInterface $logger) {}
 
     function createOrUpdateFolderOnServer(array $siteFolderToCreate, array $siteFolderToUpdate, Server $server)
     {
@@ -19,8 +17,6 @@ class SiteFolderManagerService
             $start = microtime(true);
 
             $ssh = $this->sshService->connexion($server);
-
-            $this->initFoldersOnServers($ssh, $server);
 
             $commands = [];
 
@@ -47,47 +43,32 @@ class SiteFolderManagerService
         }
     }
 
-    private function initFoldersOnServers(SSH2 $ssh, Server $server): void
-    {
-        $start = microtime(true);
-
-        foreach ($server->getFolders() as $folder) {
-            $baseFolder = $folder->getPath() . "\\000 - DEV CRM";
-            $idFolder = $baseFolder . "\\Id";
-            $nomUsageFolder = $baseFolder . "\\Nom d'usage";
-
-            $checkFolderCommand = "if not exist \"$baseFolder\" (echo 0) else (echo 1)";
-            $output = $ssh->exec($checkFolderCommand);
-
-            if (trim($output) === '0') {
-                $ssh->exec("mkdir \"$baseFolder\"");
-                $ssh->exec("mkdir \"$idFolder\"");
-                $ssh->exec("mkdir \"$nomUsageFolder\"");
-            }
-        }
-
-        $end = microtime(true) - $start;
-        $this->logger->info("temps initialisation des dossier : " . $end . "\n");
-    }
-
     private function generateCreateFolderCommand(array $siteFolder): string
     {
         $site = $siteFolder["Site"];
         $folder = $siteFolder["Folder"];
 
-        $baseFolder = $folder->getPath() . "\\000 - DEV CRM";
+        $baseFolder = $folder->getPath();
         $siteIdFolder = $baseFolder . "\\Id\\";
         $siteIntituleFolder = $baseFolder . "\\Nom d'usage\\";
 
         $commands = [
-            "mkdir \"$siteIdFolder" . $site->getIdCrm() . "\"",
-            "echo > \"$siteIdFolder" . $site->getIdCrm() . "/" . $site->getIdCrm() . ".txt\""
+            'powershell -Command "New-Item -Path \'' . str_replace("'", "''", $siteIdFolder . $site->getIdCrm()) . '\' -ItemType Directory"',
+            'powershell -Command "New-Item -Path \'' . str_replace("'", "''", $siteIdFolder . $site->getIdCrm() . "\\" . $site->getIdCrm() . '.txt') . '\' -ItemType File"'
         ];
 
         try {
             $linkTarget = $siteIdFolder . $site->getIdCrm();
-            $linkPath = $siteIntituleFolder . $site->getIntitule();
-            $commands[] = "mklink /J \"$linkPath\" \"$linkTarget\"";
+            $linkPath = $siteIntituleFolder . $site->getIntitule()  . ".lnk";
+
+            // $commands[] = "mklink /J \"$linkPath\" \"$linkTarget\"";
+
+            $commands[] = 'powershell -Command "$s = (New-Object -COM WScript.Shell).CreateShortcut(\''
+                . str_replace("'", "''", $linkPath)
+                . '\'); $s.TargetPath = \''
+                . str_replace("'", "''", $linkTarget)
+                . '\'; $s.Save()"';
+
             $site->addFolder($folder);
         } catch (IOExceptionInterface $exception) {
             $this->logger->info($exception);
@@ -101,61 +82,24 @@ class SiteFolderManagerService
         $site = $siteFolder["Site"];
         $folder = $siteFolder["Folder"];
 
-        $baseFolder = $folder->getPath() . "\\000 - DEV CRM";
+        $baseFolder = $folder->getPath();
         $siteIdFolder = $baseFolder . "\\Id\\";
         $siteIntituleFolder = $baseFolder . "\\Nom d'usage\\";
 
         $commands = [];
 
-        // Supprimer l'ancien lien symbolique
-        $commands[] = "rmdir /s /q \"$siteIntituleFolder$oldSiteIntitule\"";
+        $commands[] = 'powershell -Command "Remove-Item -Path \''
+            . str_replace("'", "''", $siteIntituleFolder . $oldSiteIntitule . ".lnk")
+            . '\' -Force -ErrorAction SilentlyContinue"';
 
-        // Créer le nouveau lien symbolique
         $linkTarget = $siteIdFolder . $site->getIdCrm();
-        $linkPath = $siteIntituleFolder . $site->getIntitule();
-        $commands[] = "mklink /J \"$linkPath\" \"$linkTarget\"";
+        $linkPath = $siteIntituleFolder . $site->getIntitule() . ".lnk";
+        $commands[] = 'powershell -Command "$s = (New-Object -COM WScript.Shell).CreateShortcut(\''
+            . str_replace("'", "''", $linkPath)
+            . '\'); $s.TargetPath = \''
+            . str_replace("'", "''", $linkTarget)
+            . '\'; $s.Save()"';
 
         return implode(' && ', $commands);
     }
-
-
-    // private function createFolder(SSH2 $ssh, array $siteFolder): void
-    // {
-    //     $site = $siteFolder["Site"];
-    //     $folder = $siteFolder["Folder"];
-
-    //     $baseFolder = $folder->getPath() . "\\000 - DEV CRM";
-    //     $siteIdFolder = $baseFolder . "\\Id\\";
-    //     $siteIntituleFolder = $baseFolder . "\\Nom d'usage\\";
-
-    //     $ssh->exec("mkdir \"$siteIdFolder\"" . $site->getIdCrm() . "");
-
-    //     $ssh->exec("echo > \"$siteIdFolder\"" . $site->getIdCrm() . "/" . $site->getIdCrm() . ".txt");
-
-    //     try {
-    //         $linkTarget = $siteIdFolder . $site->getIdCrm();
-    //         $linkPath = $siteIntituleFolder . $site->getIntitule();
-    //         $ssh->exec("mklink /J \"$linkPath\" \"$linkTarget\"");
-    //         $site->addFolder($folder);
-    //     } catch (IOExceptionInterface $exception) {
-    //         echo  $exception;
-    //     }
-    // }
-
-    // private function editFolder(SSH2 $ssh, array $siteFolder): void
-    // {
-    //     $site = $siteFolder["Site"];
-    //     $oldSiteIntitule = $site->getOldIntitule();
-    //     $folder = $siteFolder["Folder"];
-
-    //     $baseFolder = $folder->getPath() . "\\000 - DEV CRM";
-    //     $siteIdFolder = $baseFolder . "\\Id\\";
-    //     $siteIntituleFolder = $baseFolder . "\\Nom d'usage\\";
-
-    //     $ssh->exec("rmdir /s /q  \"$siteIntituleFolder\"\"$oldSiteIntitule\"");
-
-    //     $linkTarget = $siteIdFolder . $site->getIdCrm();
-    //     $linkPath = $siteIntituleFolder . $site->getIntitule();
-    //     $ssh->exec("mklink /J \"$linkPath\" \"$linkTarget\"");
-    // }
 }

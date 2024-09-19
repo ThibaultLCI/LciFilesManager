@@ -39,24 +39,24 @@ class ServerFixture extends Fixture
             //         "F:\Datas\Partages\------ COMMERCIAL"
             //     ]
             // ],
-            // [
-            //     "nom" => "Photos",
-            //     "ip" => "10.1.10.36",
-            //     "port" => 22,
-            //     "isServerCommercial" => false,
-            //     "folders" => [
-            //         "E:\CRM\---- CLIENTS CRM"
-            //     ]
-            // ],
-            // [
-            //     "nom" => "SAV France",
-            //     "ip" => "10.1.10.36",
-            //     "port" => 22,
-            //     "isServerCommercial" => false,
-            //     "folders" => [
-            //         "E:\CRM\------ SAV FRANCE CRM"
-            //     ]
-            // ],
+            [
+                "nom" => "Photos",
+                "ip" => "10.1.10.36",
+                "port" => 22,
+                "isServerCommercial" => false,
+                "folders" => [
+                    "\\\SRV-CAR-CRM\CRM\------ CLIENTS CRM"
+                ]
+            ],
+            [
+                "nom" => "SAV France",
+                "ip" => "10.1.10.36",
+                "port" => 22,
+                "isServerCommercial" => false,
+                "folders" => [
+                    "\\\SRV-CAR-CRM\CRM\------ SAV FRANCE CRM"
+                ]
+            ],
             [
                 "nom" => "Commercial",
                 "ip" => "10.1.10.36",
