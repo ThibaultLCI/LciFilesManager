@@ -38,9 +38,9 @@ class DivaltoProjetHasConsultationService
                         [
                             "pageNumber" => $pageNumber,
                             "listType" => "simple",
-                            "filters" => [
-                                "srvExport" => "1"
-                            ],
+                            // "filters" => [
+                            //     "srvExport" => "1"
+                            // ],
                         ],
                     ],
                 ];
@@ -84,11 +84,11 @@ class DivaltoProjetHasConsultationService
         $relations = [];
 
         foreach ($crmProjectConsultationRelations as $crmRelation) {
-            $projet = $this->em->getRepository(Projet::class)->findOneBy(['idProjet' => $crmRelation["dealgroupdetail"]['dealgroupheader_ID']]);
+            $projet = $this->em->getRepository(Projet::class)->findOneBy(['idCrm' => $crmRelation["dealgroupdetail"]['dealgroupheader_ID']]);
 
 
             if ($projet) {
-                $idProjet = $projet->getIdProjet();
+                $idProjet = $projet->getIdCrm();
                 $dealID = $crmRelation["dealgroupdetail"]['deal_ID'];
 
                 if (!array_key_exists($idProjet, $relations)) {
@@ -102,12 +102,12 @@ class DivaltoProjetHasConsultationService
         }
 
         foreach ($relations as $projetId => $crmConsultations) {
-            $projet = $this->em->getRepository(Projet::class)->findOneBy(["idProjet" => $projetId]);
+            $projet = $this->em->getRepository(Projet::class)->findOneBy(["idCrm" => $projetId]);
 
             $this->removeNotFindConsultation($projet, $crmConsultations);
 
             foreach ($crmConsultations as $crmConsultation) {
-                $consultation = $this->em->getRepository(Consultation::class)->findOneBy(["idConsultation" => $crmConsultation]);
+                $consultation = $this->em->getRepository(Consultation::class)->findOneBy(["idCrm" => $crmConsultation]);
 
                 if ($consultation) {
                     $projet->addConsultation($consultation);
@@ -129,7 +129,7 @@ class DivaltoProjetHasConsultationService
         // Itérer sur les consultations actuelles du projet
         foreach ($currentConsultations as $consultation) {
             // Si l'ID de la consultation actuelle n'est pas dans le tableau de nouvelles consultations
-            if (!in_array($consultation->getIdConsultation(), $consultations)) {
+            if (!in_array($consultation->getIdCrm(), $consultations)) {
                 // Retirer la consultation de l'entité Projet
                 $projet->removeConsultation($consultation);
                 // Supprimer la consultation de l'EntityManager

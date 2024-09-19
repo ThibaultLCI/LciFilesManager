@@ -28,9 +28,6 @@ class Projet
     private ?string $anneeCreationProjet = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $idProjet = null;
-
-    #[ORM\Column(length: 255)]
     private ?string $departementSite = null;
 
     #[ORM\Column(length: 255)]
@@ -41,6 +38,9 @@ class Projet
 
     #[ORM\OneToMany(mappedBy: 'projet', targetEntity: Consultation::class)]
     private Collection $consultations;
+
+    #[ORM\Column(length: 255)]
+    private ?string $idCrm = null;
 
     public function __construct()
     {
@@ -96,18 +96,6 @@ class Projet
     public function setAnneeCreationProjet(string $anneeCreationProjet): static
     {
         $this->anneeCreationProjet = $anneeCreationProjet;
-
-        return $this;
-    }
-
-    public function getIdProjet(): ?string
-    {
-        return $this->idProjet;
-    }
-
-    public function setIdProjet(string $idProjet): static
-    {
-        $this->idProjet = $idProjet;
 
         return $this;
     }
@@ -174,6 +162,18 @@ class Projet
                 $consultation->setProjet(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getIdCrm(): ?string
+    {
+        return $this->idCrm;
+    }
+
+    public function setIdCrm(string $idCrm): static
+    {
+        $this->idCrm = $idCrm;
 
         return $this;
     }

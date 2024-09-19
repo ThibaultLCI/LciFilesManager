@@ -29,9 +29,6 @@ class Consultation
     private ?string $anneeCreationConsultation = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $idConsultation = null;
-
-    #[ORM\Column(length: 255)]
     private ?string $folderName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -39,6 +36,9 @@ class Consultation
 
     #[ORM\ManyToOne(inversedBy: 'consultations')]
     private ?Projet $projet = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $idCrm = null;
 
     public function getId(): ?int
     {
@@ -105,18 +105,6 @@ class Consultation
         return $this;
     }
 
-    public function getIdConsultation(): ?string
-    {
-        return $this->idConsultation;
-    }
-
-    public function setIdConsultation(string $idConsultation): static
-    {
-        $this->idConsultation = $idConsultation;
-
-        return $this;
-    }
-
     public function getFolderName(): ?string
     {
         return $this->folderName;
@@ -149,6 +137,18 @@ class Consultation
     public function setProjet(?Projet $projet): static
     {
         $this->projet = $projet;
+
+        return $this;
+    }
+
+    public function getIdCrm(): ?string
+    {
+        return $this->idCrm;
+    }
+
+    public function setIdCrm(string $idCrm): static
+    {
+        $this->idCrm = $idCrm;
 
         return $this;
     }

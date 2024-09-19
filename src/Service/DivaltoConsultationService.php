@@ -108,17 +108,17 @@ class DivaltoConsultationService
                     ->setDepartementEntreprise($departementEntreprise)
                     ->setNomConsultation($nomConsultation)
                     ->setAnneeCreationConsultation($anneeCreationConsultation)
-                    ->setIdConsultation($idConsultation)
+                    ->setIdCrm($idConsultation)
                     ->setFolderName($folderName);
 
                 $consultation = $consultationRepository->findOneBy([
-                    'idConsultation' => $crmConsultation["opportunity"]["codeopportunity"],
+                    'idCrm' => $crmConsultation["opportunity"]["codeopportunity"],
                 ]);
 
                 if (!$consultation) {
                     $this->em->persist($newConsultation);
                     $nbNewConsultations++;
-                    array_push($consultationFolderToCreate, $newConsultation->getFolderName());
+                    array_push($consultationFolderToCreate, $newConsultation);
                 } else {
                     $hasUpdate = false;
                     $oldFolderName = $consultation->getFolderName();
@@ -155,7 +155,7 @@ class DivaltoConsultationService
 
                     if ($hasUpdate) {
                         $consultation->setOldFolderName($oldFolderName);
-                        array_push($consultationFolderToUpdate, ["newName" => $consultation->getFolderName(), "oldName" => $consultation->getOldFolderName()]);
+                        array_push($consultationFolderToUpdate, $consultation);
                         $nbUpdatedConsultations++;
                     }
                 }

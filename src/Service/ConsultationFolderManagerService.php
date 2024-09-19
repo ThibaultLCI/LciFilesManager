@@ -7,7 +7,9 @@ use App\Entity\Folder;
 use App\Entity\Projet;
 use App\Entity\Server;
 use Doctrine\ORM\EntityManagerInterface;
+use phpseclib3\Net\SSH2;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 
 class ConsultationFolderManagerService
 {
@@ -15,49 +17,78 @@ class ConsultationFolderManagerService
 
     function createOrUpdateFolderOnServer(array $foldersToCreate, array $foldersToUpdate, Server $server, string $parentFolder)
     {
-        $commands = [];
-
         if (count($foldersToCreate) != 0 || count($foldersToUpdate) != 0) {
+            $commands = [];
 
             foreach ($foldersToCreate as $folderToCreate) {
                 foreach ($server->getFolders() as $folder) {
-                    $commands[] = $this->generateCreateFolderCommand($folderToCreate, $folder, $parentFolder);
+                    foreach ($this->generateCreateFolderCommand($folderToCreate, $folder, $parentFolder) as $command) {
+                        array_push($commands, $command);
+                    }
                 }
             }
 
             foreach ($foldersToUpdate as $folderToUpdate) {
                 foreach ($server->getFolders() as $folder) {
-                    $commands[] = $this->generateEditFolderCommand($folderToUpdate, $folder, $parentFolder);
+                    foreach ($this->generateEditFolderCommand($folderToUpdate, $folder, $parentFolder) as $command) {
+                        array_push($commands, $command);
+                    }
                 }
             }
+
             $this->executeCommands($server, $commands, "Creation/modification des dossier (" . $parentFolder . " )");
         }
     }
 
-    private function generateCreateFolderCommand(string $folderTocreate, Folder $folder, string $parentFolder): string
+    private function generateCreateFolderCommand(Consultation|Projet $entity, Folder $folder, string $parentFolder): array
     {
         $baseFolder = $folder->getPath() . $parentFolder;
+        $idFolder = $baseFolder . "Id\\";
+        $intituleFolder = $baseFolder . "Nom d'usage\\";
+
+        $textFile = $parentFolder === "\\------ PROJET CRM\\" ? "Projet " : "Consultation ";
 
         $commands = [
-            "mkdir \"$baseFolder" . $folderTocreate . "\""
+            'powershell -Command "New-Item -Path \'' . str_replace("'", "''", $idFolder . $entity->getIdCrm()) . '\' -ItemType Directory"',
+            'powershell -Command "New-Item -Path \'' . str_replace("'", "''", $idFolder . $entity->getIdCrm()) . '\\' . str_replace("'", "''", $textFile . $entity->getIdCrm()) . '.txt\' -ItemType File"'
         ];
 
-        return implode(' && ', $commands);
+        try {
+            $linkTarget = $idFolder . $entity->getIdCrm();
+            $linkPath = $intituleFolder . $entity->getFolderName() . ".lnk";
+
+            $commands[] = 'powershell -Command "$s = (New-Object -COM WScript.Shell).CreateShortcut(\'' . str_replace("'", "''", $linkPath) . '\'); $s.TargetPath = \'' . str_replace("'", "''", $linkTarget) . '\'; $s.Save()"';
+        } catch (\Exception $exception) {
+            $this->folderLogger->error("Erreur lors de la génération du lien symbolique : " . $exception->getMessage());
+        }
+
+        return $commands;
     }
 
-    private function generateEditFolderCommand(array $folderToUpdate, Folder $folder, string $parentFolder): string
+    private function generateEditFolderCommand(Consultation|Projet $entity, Folder $folder, string $parentFolder): array
     {
         $baseFolder = $folder->getPath() . $parentFolder;
-
-        $newFolderName = $folderToUpdate["newName"];
-        $oldFolderName = $folderToUpdate["oldName"];
+        $idFolder = $baseFolder . "Id\\";
+        $intituleFolder = $baseFolder . "Nom d'usage\\";
 
         $commands = [];
 
-        $commands[] = "rmdir \"$baseFolder$oldFolderName\"";
-        $commands[] = "mkdir \"$baseFolder$newFolderName\"";
+        try {
+            $oldFolderName = $entity->getOldFolderName();
+            $commands[] = 'powershell -Command "Remove-Item -Path \'' . str_replace("'", "''", $intituleFolder . $oldFolderName . '.lnk') . '\'"';
+        } catch (\Exception $exception) {
+            $this->folderLogger->error("Erreur lors de la suppression de l'ancien lien symbolique : " . $exception->getMessage());
+        }
 
-        return implode(' && ', $commands);
+        try {
+            $linkTarget = $idFolder . $entity->getIdCrm();
+            $linkPath =  $intituleFolder . $entity->getFolderName() . ".lnk";
+            $commands[] = 'powershell -Command "$s = (New-Object -COM WScript.Shell).CreateShortcut(\'' . str_replace("'", "''", $linkPath) . '\'); $s.TargetPath = \'' . str_replace("'", "''", $linkTarget) . '\'; $s.Save()"';
+        } catch (\Exception $exception) {
+            $this->folderLogger->error("Erreur lors de la création du lien symbolique : " . $exception->getMessage());
+        }
+
+        return $commands;
     }
 
     public function manageShortCut()
@@ -80,19 +111,18 @@ class ConsultationFolderManagerService
         foreach ($server->getFolders() as $folder) {
             $baseFolder = $folder->getPath();
 
-            $baseProjetFolderName = $baseFolder . "\\------ PROJET CRM\\";
-            $baseConsultationFolder = $baseFolder . "\\------ CONSULTATION CRM\\";
+            $baseProjetFolderName = $baseFolder . "\------ PROJET CRM\\";
+            $baseConsultationFolder = $baseFolder . "\------ CONSULTATION CRM\\";
 
             foreach ($projets as $projet) {
 
-                $deleteCommands[] = "for /D %i in (\"{$baseProjetFolderName}{$projet->getFolderName()}\\*\") do @fsutil reparsepoint query \"%i\" >nul 2>&1 && rmdir /s /q \"%i\"";
-
+                $deleteCommands[] = 'powershell -Command "Get-ChildItem -Path \'' . $baseProjetFolderName . "\Id\\" . $projet->getIdCrm() . '\' -Filter *.lnk | Remove-Item -Force"';
 
                 foreach ($projet->getConsultations() as $key => $consultation) {
-                    $consultationFolderNameTarget = $baseConsultationFolder . $consultation->getFolderName();
-                    $consultationShortcutName = $baseProjetFolderName . $projet->getFolderName() . "\\" . $consultation->getFolderName();
+                    $consultationFolderNameTarget = $baseConsultationFolder . "Id\\" . $consultation->getIdCrm();
+                    $consultationShortcutName = $baseProjetFolderName . "Id\\" . $projet->getIdCrm() . "\\" . $consultation->getFolderName() . ".lnk";
 
-                    $commands[] =  "mklink /J \"$consultationShortcutName\" \"$consultationFolderNameTarget\"";
+                    $commands[] = 'powershell -Command "$s = (New-Object -COM WScript.Shell).CreateShortcut(\'' . str_replace("'", "''", $consultationShortcutName) . '\'); $s.TargetPath = \'' . str_replace("'", "''", $consultationFolderNameTarget) . '\'; $s.Save()"';
                 }
             }
         }
@@ -112,42 +142,48 @@ class ConsultationFolderManagerService
         foreach ($server->getFolders() as $folder) {
             $baseFolder = $folder->getPath();
 
-            $devisFolder = $baseFolder . "\\------ DEVIS\\";
-            $baseProjetFolderName = $baseFolder . "\\------ PROJET CRM\\";
-            $baseConsultationFolder = $baseFolder . "\\------ CONSULTATION CRM\\";
+            $devisFolder = $baseFolder . "\------ DEVIS\\";
+            $baseProjetFolderName = $baseFolder . "\------ PROJET CRM\\";
+            $baseConsultationFolder = $baseFolder . "\------ CONSULTATION CRM\\";
 
             foreach ($consultations as $consultation) {
 
-                $deleteCommands[] = "for /D %i in (\"{$baseConsultationFolder}{$consultation->getFolderName()}\\*\") do @fsutil reparsepoint query \"%i\" >nul 2>&1 && rmdir /s /q \"%i\"";
+                $deleteCommands[] = 'powershell -Command "Get-ChildItem -Path \'' . $baseConsultationFolder . "\Id\\" . $consultation->getIdCrm() . '\' -Filter *.lnk | Remove-Item -Force"';
 
                 if ($consultation->getProjet()) {
-                    $projetFolderNameTarget = $baseProjetFolderName . $consultation->getProjet()->getFolderName();
-                    $projetShortcutName = $baseConsultationFolder . $consultation->getFolderName() . "\\" . $consultation->getProjet()->getFolderName();
+                    $projetFolderNameTarget = $baseProjetFolderName . "Id\\" . $consultation->getProjet()->getIdCrm();
+                    $projetShortcutName = $baseConsultationFolder . "Id\\" . $consultation->getIdCrm() . "\\" . $consultation->getProjet()->getFolderName() . ".lnk";
 
-                    $commands[] =  "mklink /J \"$projetShortcutName\" \"$projetFolderNameTarget\"";
+                    $commands[] = 'powershell -Command "$s = (New-Object -COM WScript.Shell).CreateShortcut(\'' . str_replace("'", "''", $projetShortcutName) . '\'); $s.TargetPath = \'' . str_replace("'", "''", $projetFolderNameTarget) . '\'; $s.Save()"';
                 }
 
-                $devisFolderNameTarget = $devisFolder . "Devis " . $consultation->getAnneeCreationConsultation();
-                $devisShortcutName = $baseConsultationFolder . $consultation->getFolderName() . "\\Devis " . $consultation->getAnneeCreationConsultation();
+                // $devisFolderNameTarget = $devisFolder . "Devis " . $consultation->getAnneeCreationConsultation();
+                // $devisShortcutName = $baseConsultationFolder . $consultation->getFolderName() . "\\Devis " . $consultation->getAnneeCreationConsultation();
 
-                $devisCommands[] =  "mklink /J \"$devisShortcutName\" \"$devisFolderNameTarget\"";
+                // $devisCommands[] =  "mklink /J \"$devisShortcutName\" \"$devisFolderNameTarget\"";
             }
         }
 
         $this->executeCommands($server, $deleteCommands, "Suprression des raccourcis dans les consultations");
         $this->executeCommands($server, $commands, "Creation des raccourcis dans les consultations vers le projet");
-        $this->executeCommands($server, $devisCommands, "Creation des raccourcis dans les consultations vers le dossier devis");
+        // $this->executeCommands($server, $devisCommands, "Creation des raccourcis dans les consultations vers le dossier devis");
     }
 
     private function executeCommands(Server $server, array $commands, string $log = null)
     {
         $ssh = $this->sshService->connexion($server);
 
-        $batches = array_chunk($commands, 20);
+        foreach ($commands as $command) {
+            $output = $ssh->exec($command);
+            $errorOutput = $ssh->getStdError();
 
-        foreach ($batches as $batch) {
-            $allCommands = implode(' && ', $batch);
-            $ssh->exec($allCommands);
+            if (!empty($errorOutput)) {
+                $this->folderLogger->error("Erreur lors de l'exécution de la commande : $command");
+                $this->folderLogger->error("Message d'erreur : $errorOutput");
+
+                return;
+            }
+            $this->folderLogger->info($command);
         }
 
         if ($log) {

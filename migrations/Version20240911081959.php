@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20240823122250 extends AbstractMigration
+final class Version20240911081959 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -20,9 +20,9 @@ final class Version20240823122250 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('CREATE TABLE consultation (id INT AUTO_INCREMENT NOT NULL, projet_id INT DEFAULT NULL, nom_entreprise VARCHAR(255) NOT NULL, ville_entreprise VARCHAR(255) NOT NULL, departement_entreprise VARCHAR(255) NOT NULL, nom_consultation VARCHAR(255) NOT NULL, annee_creation_consultation VARCHAR(255) NOT NULL, id_consultation VARCHAR(255) NOT NULL, folder_name VARCHAR(255) NOT NULL, old_folder_name VARCHAR(255) DEFAULT NULL, INDEX IDX_964685A6C18272 (projet_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
+        $this->addSql('CREATE TABLE consultation (id INT AUTO_INCREMENT NOT NULL, projet_id INT DEFAULT NULL, nom_entreprise VARCHAR(255) NOT NULL, ville_entreprise VARCHAR(255) NOT NULL, departement_entreprise VARCHAR(255) NOT NULL, nom_consultation VARCHAR(255) NOT NULL, annee_creation_consultation VARCHAR(255) NOT NULL, folder_name VARCHAR(255) NOT NULL, old_folder_name VARCHAR(255) DEFAULT NULL, id_crm VARCHAR(255) NOT NULL, INDEX IDX_964685A6C18272 (projet_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE folder (id INT AUTO_INCREMENT NOT NULL, server_id INT DEFAULT NULL, path VARCHAR(255) NOT NULL, INDEX IDX_ECA209CD1844E6B7 (server_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-        $this->addSql('CREATE TABLE projet (id INT AUTO_INCREMENT NOT NULL, nom_site VARCHAR(255) NOT NULL, ville_site VARCHAR(255) NOT NULL, nom_projet VARCHAR(255) NOT NULL, annee_creation_projet VARCHAR(255) NOT NULL, id_projet VARCHAR(255) NOT NULL, departement_site VARCHAR(255) NOT NULL, folder_name VARCHAR(255) NOT NULL, old_folder_name VARCHAR(255) DEFAULT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
+        $this->addSql('CREATE TABLE projet (id INT AUTO_INCREMENT NOT NULL, nom_site VARCHAR(255) NOT NULL, ville_site VARCHAR(255) NOT NULL, nom_projet VARCHAR(255) NOT NULL, annee_creation_projet VARCHAR(255) NOT NULL, departement_site VARCHAR(255) NOT NULL, folder_name VARCHAR(255) NOT NULL, old_folder_name VARCHAR(255) DEFAULT NULL, id_crm VARCHAR(255) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE server (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(255) NOT NULL, host VARCHAR(255) NOT NULL, port INT NOT NULL, is_server_commercial TINYINT(1) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE site (id INT AUTO_INCREMENT NOT NULL, id_crm VARCHAR(255) NOT NULL, intitule VARCHAR(255) NOT NULL, ville VARCHAR(255) NOT NULL, old_intitule VARCHAR(255) DEFAULT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE site_folder (site_id INT NOT NULL, folder_id INT NOT NULL, INDEX IDX_9C0CA792F6BD1646 (site_id), INDEX IDX_9C0CA792162CB942 (folder_id), PRIMARY KEY(site_id, folder_id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');

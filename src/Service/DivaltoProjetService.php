@@ -107,17 +107,17 @@ class DivaltoProjetService
                     ->setDepartementSite($departementSite)
                     ->setNomProjet($nomProjet)
                     ->setAnneeCreationProjet('date')
-                    ->setIdProjet($idProjet)
+                    ->setIdCrm($idProjet)
                     ->setFolderName($folderName);
 
                 $projet = $projetRepository->findOneBy([
-                    'idProjet' => $idProjet,
+                    'idCrm' => $idProjet,
                 ]);
 
                 if (!$projet) {
                     $this->em->persist($newProjet);
                     $nbNewProjets++;
-                    array_push($projetFolderToCreate, $newProjet->getFolderName());
+                    array_push($projetFolderToCreate, $newProjet);
                 } else {
                     $hasUpdate = false;
                     $oldFolderName = $projet->getFolderName();
@@ -154,7 +154,7 @@ class DivaltoProjetService
 
                     if ($hasUpdate) {
                         $projet->setOldFolderName($oldFolderName);
-                        array_push($projetFolderToUpdate, ["newName" => $projet->getFolderName(), "oldName" => $projet->getOldFolderName()]);
+                        array_push($projetFolderToUpdate, $projet);
                         $nbUpdatedProjets++;
                     }
                 }
