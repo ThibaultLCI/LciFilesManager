@@ -157,16 +157,16 @@ class ConsultationFolderManagerService
                     $commands[] = 'powershell -Command "$s = (New-Object -COM WScript.Shell).CreateShortcut(\'' . str_replace("'", "''", $projetShortcutName) . '\'); $s.TargetPath = \'' . str_replace("'", "''", $projetFolderNameTarget) . '\'; $s.Save()"';
                 }
 
-                // $devisFolderNameTarget = $devisFolder . "Devis " . $consultation->getAnneeCreationConsultation();
-                // $devisShortcutName = $baseConsultationFolder . $consultation->getFolderName() . "\\Devis " . $consultation->getAnneeCreationConsultation();
+                $devisFolderNameTarget = $devisFolder . "Devis " . $consultation->getAnneeCreationConsultation();
+                $devisShortcutName = $baseConsultationFolder . "Id\\" . $consultation->getIdCrm() . "\\Devis " . $consultation->getAnneeCreationConsultation() . ".lnk";
 
-                // $devisCommands[] =  "mklink /J \"$devisShortcutName\" \"$devisFolderNameTarget\"";
+                $devisCommands[] = 'powershell -Command "$s = (New-Object -COM WScript.Shell).CreateShortcut(\'' . str_replace("'", "''", $devisShortcutName) . '\'); $s.TargetPath = \'' . str_replace("'", "''", $devisFolderNameTarget) . '\'; $s.Save()"';
             }
         }
 
         $this->executeCommands($server, $deleteCommands, "Suprression des raccourcis dans les consultations");
         $this->executeCommands($server, $commands, "Creation des raccourcis dans les consultations vers le projet");
-        // $this->executeCommands($server, $devisCommands, "Creation des raccourcis dans les consultations vers le dossier devis");
+        $this->executeCommands($server, $devisCommands, "Creation des raccourcis dans les consultations vers le dossier devis");
     }
 
     private function executeCommands(Server $server, array $commands, string $log = null)
