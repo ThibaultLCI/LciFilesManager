@@ -43,11 +43,11 @@ class GetCrmConsultationsCommand extends Command
                 try {
                     $fileSystem->touch($file);
 
-                    // $this->consultationLogger->info('Command de recuperation Consultations');
-                    // $this->divaltoConsultationService->fetchConsultations();
+                    $this->consultationLogger->info('Command de recuperation Consultations');
+                    $this->divaltoConsultationService->fetchConsultations();
 
-                    // $this->projetLogger->info('Command de recuperation Projets');
-                    // $this->divaltoProjetService->fetchProjets();
+                    $this->projetLogger->info('Command de recuperation Projets');
+                    $this->divaltoProjetService->fetchProjets();
 
                     $this->projetHasConsultationLogger->info('Command de recuperation Relation projets Consultations');
                     $this->divaltoProjetHasConsultationService->fetchRelations();
